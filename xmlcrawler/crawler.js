@@ -2,6 +2,7 @@ const parser = require('xml-parser');
 var request = require('request');
 var cheerio = require('cheerio');
 var URL = require('url-parse');
+var fs = require('fs');
 
 module.exports = {
 
@@ -37,14 +38,21 @@ module.exports = {
 
          //Loops through the array of strings that were split, and looks to
          //find the URL's using the REGEX above.
+        fs.truncate('./output.txt', 0, function(){console.log('Rewriting File!')})
          for (var i = 0; i < arrayOfParsedXml.length; i++) {
            //Loop through the array of strings lookign to see if there is a URl
            if(arrayOfParsedXml[i].match(regex)){
              //If a URl is found, add it to the final URLS list
              urls.push(arrayOfParsedXml[i]);
+             fs.appendFile("./output.txt", arrayOfParsedXml[i], function(err) {
+                if (err) {
+                    return console.log(err)
+                }
+            });
            };
+
          }
-         return urls;
+
        }
     });
 
