@@ -5,6 +5,8 @@ var URL = require('url-parse');
 var GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
 var fs = require('fs');
+var LineByLineReader = require('line-by-line'),
+    lr = new LineByLineReader('output.txt');
 
 const crawler = require('./xmlcrawler/crawler');
 
@@ -13,6 +15,14 @@ var sheet;
 
 var sitemapURLs = [];
 var parsedXmlString;
+var currentCellLocation = 0;
+
+lr.on('line', function(line) {
+    // 'line' contains the current line without the trailing newline character.
+    console.log("this is the line: " + line);
+});
+
+getKeywordsFromURL("http://www.jbheatingandair.com/heating-repairs/");
 
 async.series([
         function setAuth(step) {
@@ -37,22 +47,23 @@ async.series([
                   colCount - number of columns
                  */
                 sheet = info.worksheets[2];
+
                 console.log('sheet 1: ' + sheet.title);
                 step();
             });
         },
         function addToRows(step) {
-          sheet.getCells({
-          'min-row': 1,
-          'max-row': 5,
-          'return-empty': true
-        }, function(err, cells) {
-          var cell = cells[0];
-          console.log('Cell R'+cell.row+'C'+cell.col+' = '+cells.value);
+            sheet.getCells({
+                'min-row': 1,
+                'max-row': 100,
+                'return-empty': true
+            }, function(err, cells) {
+                var cell = cells[0];
+                console.log('Cell R' + cell.row + 'C' + cell.col + ' = ' + cells.value);
 
-          cells[4].value = 1;
-          cells[5].value = 2;
-          sheet.bulkUpdateCells(cells); //async
+                cells[4].value = 1;
+                cells[5].value = 2;
+                sheet.bulkUpdateCells(cells); //async
 
             })
             step();
@@ -63,6 +74,57 @@ async.series([
     }
 );
 
+
+function manipulateCell(cellLocation) {
+    sheet.getCells({
+        'min-row': 1,
+        'max-row': 100,
+        'return-empty': true
+    }, function(err, cells) {
+        var cell = cells[0];
+        console.log('Cell R' + cell.row + 'C' + cell.col + ' = ' + cells.value);
+
+        cells[4].value = 1;
+        cells[5].value = 2;
+        sheet.bulkUpdateCells(cells); //async
+
+    });
+}
+
+/*
+  Given A URL, this function creates a file 'keyword.txt', which is an array of
+  keywords taken from anything with-in a <strong> on a given page.
+
+  These keywords will be used to add the keywords to the Google Spreadsheet to track
+  the ranking of a specific keyword on a page.
+*/
+function getKeywordsFromURL(URL) {
+
+    //looking through the url for strong tag, which are idealy the keyword
+    request(URL, function(error, response, body) {
+        if (error) {
+            console.log("Error: " + error);
+            return;
+        }
+        if (response.statusCode === 200) {
+            var $ = cheerio.load(body);
+            //This jquery call iterates through each strong tag within the given URL, finding
+            //the keywords for the specific URL
+            fs.truncate('./keyword.txt', 0, function() {
+                console.log("Rewriting keyword file");
+                $('strong').each(function(idx, el) {
+                    //Iterate through the strong tags, and write to 'keyword.txt'
+                    fs.appendFile("./keyword.txt", $(el).text() + '\n', function(err) {
+                        if (err) {
+                            return console.log(err)
+                        }
+                    });
+                });
+            })
+        }
+    });
+
+}
 
 
 
