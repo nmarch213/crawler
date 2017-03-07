@@ -38,7 +38,7 @@ module.exports = {
 
          //Loops through the array of strings that were split, and looks to
          //find the URL's using the REGEX above.
-        fs.truncate('./sitemapURLS.txt', 0, function(){console.log('Rewriting File!')})
+        fs.truncate('./sitemapURLS.txt', 0, function(){console.log('Rewriting Sitemaps!')})
          for (var i = 0; i < arrayOfParsedXml.length; i++) {
            //Loop through the array of strings lookign to see if there is a URl
            if(arrayOfParsedXml[i].match(regex)){

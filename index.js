@@ -6,7 +6,8 @@ var GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
 var fs = require('fs');
 var LineByLineReader = require('line-by-line'),
-    lr = new LineByLineReader('sitemapURLS.txt');
+    sitemapURLSLineReader = new LineByLineReader('sitemapURLS.txt');
+keywordLineReader = new LineByLineReader('keyword.txt');
 
 const crawler = require('./xmlcrawler/crawler');
 
@@ -18,8 +19,7 @@ var parsedXmlString;
 var currentCellLocation = 0;
 var fileLineLength = 0;
 
-readSitemapURLS();
-getKeywordsFromURL("http://www.jbheatingandair.com/heating-repairs/");
+getSitemapUrlLineLength();
 
 async.series([
         function setAuth(step) {
@@ -49,37 +49,55 @@ async.series([
             });
         },
         function addToRows(step) {
-            sheet.getCells({
-                'min-row': 1,
-                'max-row': 100,
-                'return-empty': true
-            }, function(err, cells) {
-                var cell = cells[0];
-                console.log('Cell R' + cell.row + 'C' + cell.col + ' = ' + cells.value);
-
-                cells[4].value = 1;
-                cells[5].value = 2;
-                sheet.bulkUpdateCells(cells); //async
-
-            })
+            addToGoogleWorksheet("http://www.jbheatingandair.com/heating-repairs/");
             step();
         }
     ],
     function(error, results) {}
 );
 
+/*
+  This function will modify the cells of a given row which is determined by the Sitemap URL link,
+  this will also add the keyword specific to the URL and add it to the google spreadsheet.
 
-function manipulateCell(row, sheet) {
+  row - this will be the offset determined by which URL we are currently finding the keyword for
+  sheet - This is just passing the given sheet, may not be needed but added for refactoring if needed
+  numberOfRows - This will be determined by the line length of the 'URLSitemaps.txt'
+*/
+function manipulateCell(row, numberOfRows, URL) {
+    console.log("Trying to manipulateCell")
     sheet.getCells({
         'min-row': 1,
-        'max-row': 100,
+        'max-row': numberOfRows + 1, //just in case
         'return-empty': true
     }, function(err, cells) {
         var cell = cells[0];
-        console.log('Cell R' + cell.row + 'C' + cell.col + ' = ' + cells.value);
 
-        cells[4].value = 1;
-        cells[5].value = 2;
+        var keyword = [];
+        keywordLineReader.on('line', function(line) {
+            console.log("this is a line" + line);
+            keyword.push(line);
+        });
+
+
+        //edit the page
+        cells[i].value = URL;
+        //edit the keyphrases
+        cells[i + 1].value = keyword;
+        //edit the rank
+        cells[i + 2].value = 'not checked';
+        //edit the Notes
+        cells[i + 3].value = 'n/a';
+
+        //go to the next row 
+        //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
+        //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
+        //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
+        //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
+        //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
+        //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
+        i = i + 3;
+
         sheet.bulkUpdateCells(cells); //async
 
     });
@@ -92,7 +110,7 @@ function manipulateCell(row, sheet) {
   These keywords will be used to add the keywords to the Google Spreadsheet to track
   the ranking of a specific keyword on a page.
 */
-function getKeywordsFromURL(URL) {
+function getKeywordsFromURL(URL, step) {
 
     //looking through the url for strong tag, which are idealy the keyword
     request(URL, function(error, response, body) {
@@ -104,7 +122,7 @@ function getKeywordsFromURL(URL) {
             var $ = cheerio.load(body);
             //This jquery call iterates through each strong tag within the given URL, finding
             //the keywords for the specific URL
-            fs.truncate('./keyword.txt', 0, function() {
+            fs.truncate('./keyword.txt', 0, function(step) {
                 console.log("Rewriting keyword file");
                 $('strong').each(function(idx, el) {
                     //Iterate through the strong tags, and write to 'keyword.txt'
@@ -117,18 +135,59 @@ function getKeywordsFromURL(URL) {
             })
         }
     });
+    step(null, 'step');
 }
 
 /*
   This function reads the 'sitemapURLS.txt', this also counts the line lengeth which should
   be used to show how many rows should be selected for the google spreadsheet.
 */
-function readSitemapURLS() {
-    lr.on('line', function(line) {
+function getSitemapUrlLineLength() {
+    sitemapURLSLineReader.on('line', function(line) {
             fileLineLength++;
             // console.log("this is the line: " + line);
         })
         .on('end', function() {
             console.log("URLS in Sitemap: " + fileLineLength);
         });
+}
+
+/*
+  This function will loop through each of the 'sitemapURLS.txt'
+    Generate the specific keywords for index'd sitemapURL
+    Add the 'URL' to the google worksheet
+    Add the 'keywords' to the google worksheet
+    Set the 'rank' to unchecked
+    Set the 'notes' to n/a
+*/
+
+function addToGoogleWorksheet(URL) {
+    console.log("adding to google worksheet")
+    var currentURLLine = 0;
+    var row = 0;
+
+    async.series([
+        function keywordTime(step) {
+            console.log("running keywords");
+            getKeywordsFromURL(URL, step);
+        },
+        function runGoogleStuff(step) {
+            console.log("running google")
+                //iterates through the enitre 'sitemapURLS.txt'
+            sitemapURLSLineReader.on('line', function(line) {
+                console.log("currently on line: " + line);
+                //counts which line we are on
+                currentURLLine++;
+                //row is total rows / 4, since there are 4 columns
+                row = row + 4;
+                manipulateCell(row, fileLineLength, URL);
+            })
+            console.log('exit google');
+        }
+    ], function(error, endstep){
+      if(error){
+        console.log(error);
+        console.log(endstep);
+      }
+    })
 }
