@@ -25,19 +25,36 @@ async.series([
             doc.getInfo(function(err, info) {
                 console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
                 // doc.addRow(info.worksheets[1], )
+                /*
+                  Worksheet[0] = Main list of clients
+                  Worksheet[1] = The first named client to the right of the "main" sheet.
+
+                  Sheet has these object properties you can get info from:
+                  url - the URL for the sheet
+                  id - the ID of the sheet
+                  title -   the title (visible on the tabs in google's interface)
+                  rowCount - number of rows
+                  colCount - number of columns
+                 */
                 sheet = info.worksheets[1];
-                console.log('sheet 1: ' + sheet);
+                console.log('sheet 1: ' + sheet.title);
                 step();
             });
         },
         function addToRows(step) {
-            sheet.getRows({
-              offset: 1,
-              limit: 20,
-              orderby: 'col2'
-            }, function(err, rows){
-              console.log('Read '+ rows.length+ " rows");
-              console.log(rows[0]);
+          sheet.getCells({
+          'min-row': 1,
+          'max-row': 5,
+          'return-empty': true
+        }, function(err, cells) {
+          var cell = cells[0];
+          console.log('Cell R'+cell.row+'C'+cell.col+' = '+cells.value);
+
+          cells[4].value = 1;
+          cells[5].value = 2;
+          cells[2].formula = '=A1+B1';
+          sheet.bulkUpdateCells(cells); //async
+
             })
             step();
         }
