@@ -36,7 +36,7 @@ async.series([
                   rowCount - number of rows
                   colCount - number of columns
                  */
-                sheet = info.worksheets[1];
+                sheet = info.worksheets[2];
                 console.log('sheet 1: ' + sheet.title);
                 step();
             });
@@ -52,7 +52,6 @@ async.series([
 
           cells[4].value = 1;
           cells[5].value = 2;
-          cells[2].formula = '=A1+B1';
           sheet.bulkUpdateCells(cells); //async
 
             })
@@ -60,7 +59,7 @@ async.series([
         }
     ],
     function(error, results) {
-        console.log
+        console.log('end?');
     }
 );
 
