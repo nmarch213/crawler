@@ -4,10 +4,15 @@ const parser = require('xml-parser');
 var URL = require('url-parse');
 var GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
-var fs = require('fs');
+var fs = require('fs'),
+    readline = require('readline');
 var LineByLineReader = require('line-by-line'),
     sitemapURLSLineReader = new LineByLineReader('sitemapURLS.txt');
 keywordLineReader = new LineByLineReader('keyword.txt');
+
+var rd = readline.createInterface({
+    input: fs.createReadStream('sitemapURLS.txt')
+});
 
 const crawler = require('./xmlcrawler/crawler');
 
@@ -19,12 +24,11 @@ var parsedXmlString;
 var currentCellLocation = 0;
 var fileLineLength = 0;
 
-getSitemapUrlLineLength();
-
 async.series([
         function setAuth(step) {
             sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
             var creds = require('./google-gen-creds.json');
+            getSitemapUrlLineLength();
             doc.useServiceAccountAuth(creds, step);
         },
 
@@ -49,8 +53,7 @@ async.series([
             });
         },
         function addToRows(step) {
-            addToGoogleWorksheet("http://www.jbheatingandair.com/heating-repairs/");
-            step();
+            addToGoogleWorksheet("http://www.jbheatingandair.com/heating-repairs/", step);
         }
     ],
     function(error, results) {}
@@ -122,7 +125,7 @@ function getKeywordsFromURL(URL, step) {
             var $ = cheerio.load(body);
             //This jquery call iterates through each strong tag within the given URL, finding
             //the keywords for the specific URL
-            fs.truncate('./keyword.txt', 0, function(step) {
+            fs.truncate('./keyword.txt', 0, function() {
                 console.log("Rewriting keyword file");
                 $('strong').each(function(idx, el) {
                     //Iterate through the strong tags, and write to 'keyword.txt'
@@ -132,10 +135,11 @@ function getKeywordsFromURL(URL, step) {
                         }
                     });
                 });
-            })
+                console.log("ending keywords")
+                step();
+            });
         }
     });
-    step(null, 'step');
 }
 
 /*
@@ -148,6 +152,7 @@ function getSitemapUrlLineLength() {
             // console.log("this is the line: " + line);
         })
         .on('end', function() {
+          sitemapURLSLineReader.close();
             console.log("URLS in Sitemap: " + fileLineLength);
         });
 }
@@ -174,15 +179,17 @@ function addToGoogleWorksheet(URL) {
         function runGoogleStuff(step) {
             console.log("running google")
                 //iterates through the enitre 'sitemapURLS.txt'
-            sitemapURLSLineReader.on('line', function(line) {
+
+            rd.on('line', function(line) {
                 console.log("currently on line: " + line);
                 //counts which line we are on
                 currentURLLine++;
                 //row is total rows / 4, since there are 4 columns
                 row = row + 4;
-                manipulateCell(row, fileLineLength, URL);
+                manipulateCell(row, fileLineLength, line);
             })
-            console.log('exit google');
+              console.log("exit google 2")
+
         }
     ], function(error, endstep){
       if(error){
