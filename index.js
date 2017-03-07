@@ -6,7 +6,7 @@ var GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
 var fs = require('fs');
 var LineByLineReader = require('line-by-line'),
-    lr = new LineByLineReader('output.txt');
+    lr = new LineByLineReader('sitemapURLS.txt');
 
 const crawler = require('./xmlcrawler/crawler');
 
@@ -16,12 +16,9 @@ var sheet;
 var sitemapURLs = [];
 var parsedXmlString;
 var currentCellLocation = 0;
+var fileLineLength = 0;
 
-lr.on('line', function(line) {
-    // 'line' contains the current line without the trailing newline character.
-    console.log("this is the line: " + line);
-});
-
+readSitemapURLS();
 getKeywordsFromURL("http://www.jbheatingandair.com/heating-repairs/");
 
 async.series([
@@ -34,7 +31,6 @@ async.series([
         function getInfoAndWorksheets(step) {
             doc.getInfo(function(err, info) {
                 console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
-                // doc.addRow(info.worksheets[1], )
                 /*
                   Worksheet[0] = Main list of clients
                   Worksheet[1] = The first named client to the right of the "main" sheet.
@@ -69,13 +65,11 @@ async.series([
             step();
         }
     ],
-    function(error, results) {
-        console.log('end?');
-    }
+    function(error, results) {}
 );
 
 
-function manipulateCell(cellLocation) {
+function manipulateCell(row, sheet) {
     sheet.getCells({
         'min-row': 1,
         'max-row': 100,
@@ -123,32 +117,18 @@ function getKeywordsFromURL(URL) {
             })
         }
     });
-
 }
 
-
-
-// for (var i = 0; i < sitemapURLs.length; i++) {
-//   console.log('running');
-//   request(sitemapURLs[i], function(error, response,body){
-//     if(err){
-//       console.log("Error: " + error);
-//     }
-//
-//     // Check status code (200 is HTTP OK)
-//     console.log("Status code: " + response.statusCode);
-//     if(response.statusCode === 200) {
-//       // Parse the document body
-//       var $ = cheerio.load(body);
-//       var keywords = $('strong').text();
-//       googleSheet.site.push({
-//         "keywords": keywords,
-//         "url" : i
-//       });
-//
-//       console.log("these are the keywords: " + $('strong').text());
-//
-//     }
-//   });
-//
-// }
+/*
+  This function reads the 'sitemapURLS.txt', this also counts the line lengeth which should
+  be used to show how many rows should be selected for the google spreadsheet.
+*/
+function readSitemapURLS() {
+    lr.on('line', function(line) {
+            fileLineLength++;
+            // console.log("this is the line: " + line);
+        })
+        .on('end', function() {
+            console.log("URLS in Sitemap: " + fileLineLength);
+        });
+}
