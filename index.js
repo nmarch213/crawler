@@ -28,7 +28,7 @@ async.series([
         function setAuth(step) {
             sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
             var creds = require('./google-gen-creds.json');
-            getSitemapUrlLineLength();
+            //getSitemapUrlLineLength();
             doc.useServiceAccountAuth(creds, step);
         },
 
@@ -147,12 +147,18 @@ function getKeywordsFromURL(URL, step) {
   be used to show how many rows should be selected for the google spreadsheet.
 */
 function getSitemapUrlLineLength() {
+  console.log("this is running again!");
+    sitemapURLSLineReader.on('error', function(error){
+      if(error){
+        console.log(error);
+      }
+    })
     sitemapURLSLineReader.on('line', function(line) {
             fileLineLength++;
-            // console.log("this is the line: " + line);
+
+            console.log("this is the line: " + line);
         })
-        .on('end', function() {
-          sitemapURLSLineReader.close();
+        sitemapURLSLineReader.on('end', function() {
             console.log("URLS in Sitemap: " + fileLineLength);
         });
 }
@@ -178,9 +184,14 @@ function addToGoogleWorksheet(URL) {
         },
         function runGoogleStuff(step) {
             console.log("running google")
+           // getSitemapUrlLineLength();
                 //iterates through the enitre 'sitemapURLS.txt'
-
-            rd.on('line', function(line) {
+            sitemapURLSLineReader.on('error', function(error){
+              if(error){
+                console.log(error);
+              }
+            })
+            sitemapURLSLineReader.on('line', function(line) {
                 console.log("currently on line: " + line);
                 //counts which line we are on
                 currentURLLine++;
@@ -188,8 +199,12 @@ function addToGoogleWorksheet(URL) {
                 row = row + 4;
                 manipulateCell(row, fileLineLength, line);
             })
+            sitemapURLSLineReader.on('end', function(step){
+              console.log("hey this finnished lol");
+              step();
+            })
               console.log("exit google 2")
-
+            step();
         }
     ], function(error, endstep){
       if(error){
