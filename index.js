@@ -28,7 +28,7 @@ async.series([
         function setAuth(step) {
             sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
             var creds = require('./google-gen-creds.json');
-            //getSitemapUrlLineLength();
+            getSitemapUrlLineLength();
             doc.useServiceAccountAuth(creds, step);
         },
 
@@ -68,40 +68,46 @@ async.series([
   numberOfRows - This will be determined by the line length of the 'URLSitemaps.txt'
 */
 function manipulateCell(row, numberOfRows, URL) {
-    console.log("Trying to manipulateCell")
     sheet.getCells({
-        'min-row': 1,
-        'max-row': numberOfRows + 1, //just in case
+        'min-row': row,
+        'max-row': row + 1, //just in case
         'return-empty': true
     }, function(err, cells) {
-        var cell = cells[0];
+        //var cell = cells[0];
 
         var keyword = [];
+        keywordLineReader = new LineByLineReader('keyword.txt');
         keywordLineReader.on('line', function(line) {
             console.log("this is a line" + line);
             keyword.push(line);
         });
 
+        console.log(cells[0].row + " " + cells[0].col);
+        console.log(cells[1].row + " " + cells[1].col);
 
         //edit the page
-        cells[i].value = URL;
+        cells[0].value = URL;
         //edit the keyphrases
-        cells[i + 1].value = keyword;
+        cells[1].value = keyword[0];
         //edit the rank
-        cells[i + 2].value = 'not checked';
+        cells[2].value = 'not checked';
         //edit the Notes
-        cells[i + 3].value = 'n/a';
+        cells[3].value = 'n/a';
 
-        //go to the next row 
+        //go to the next row
         //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
         //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
         //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
         //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
         //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
         //NOTE: IF THE COLUMNS INCREASES THIS NEEDS TO BE ALTERED
-        i = i + 3;
+        //i = i + 3;
 
-        sheet.bulkUpdateCells(cells); //async
+        sheet.bulkUpdateCells(cells, function(err){
+          if(err){
+            console.log(err);
+          }
+        }); //async
 
     });
 }
@@ -156,7 +162,7 @@ function getSitemapUrlLineLength() {
     sitemapURLSLineReader.on('line', function(line) {
             fileLineLength++;
 
-            console.log("this is the line: " + line);
+            //console.log("this is the line: " + line);
         })
         sitemapURLSLineReader.on('end', function() {
             console.log("URLS in Sitemap: " + fileLineLength);
@@ -175,7 +181,7 @@ function getSitemapUrlLineLength() {
 function addToGoogleWorksheet(URL) {
     console.log("adding to google worksheet")
     var currentURLLine = 0;
-    var row = 0;
+    var row = 1;
 
     async.series([
         function keywordTime(step) {
@@ -184,26 +190,24 @@ function addToGoogleWorksheet(URL) {
         },
         function runGoogleStuff(step) {
             console.log("running google")
-           // getSitemapUrlLineLength();
+            urlReader = new LineByLineReader('sitemapURLS.txt');
+           //getSitemapUrlLineLength();
                 //iterates through the enitre 'sitemapURLS.txt'
-            sitemapURLSLineReader.on('error', function(error){
+            urlReader.on('error', function(error){
               if(error){
                 console.log(error);
               }
             })
-            sitemapURLSLineReader.on('line', function(line) {
-                console.log("currently on line: " + line);
+            urlReader.on('line', function(line) {
                 //counts which line we are on
                 currentURLLine++;
                 //row is total rows / 4, since there are 4 columns
-                row = row + 4;
+                row = row + 1;
+                console.log("current row: " + row);
                 manipulateCell(row, fileLineLength, line);
             })
-            sitemapURLSLineReader.on('end', function(step){
-              console.log("hey this finnished lol");
-              step();
+            urlReader.on('end', function(step){
             })
-              console.log("exit google 2")
             step();
         }
     ], function(error, endstep){
