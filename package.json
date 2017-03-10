@@ -13,6 +13,7 @@
     "cheerio": "^0.22.0",
     "google-spreadsheet": "^2.0.3",
     "line-by-line": "^0.1.5",
+    "moment": "^2.17.1",
     "node-gyp": "^3.5.0",
     "nodemon": "^1.11.0",
     "rebuild": "^0.1.2",
