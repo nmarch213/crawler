@@ -64,7 +64,7 @@ module.exports = {
                 }, function(err, rows) {
                     console.log('Read ' + rows.length + ' rows');
                     var currentURLLine = 0;
-                    var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt', {skipEmptyLines: true});
+                    var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt', { skipEmptyLines: true });
                     //Reads reach of the lines of the sitemapURL file.
                     sitemapURLSLineReader.on('line', function(line) {
                         //another async function to ensure each step properly saves in google
@@ -84,16 +84,35 @@ module.exports = {
                                         //find the meta tag -> Keyword ->content
                                         //This find all the keywords
                                         var key = $('meta[name=keywords]').attr('content');
-                                        if(key){
-											//split the keywords by ','
-                                        	keywords = key.split(',');
+                                        if (key) {
+                                            //split the keywords by ','
+                                            keywords = key.split(',');
                                         }
                                         var zipcode = $('span[itemprop=postalCode]').text();
-                                        console.log("zipcode: " +zipcode);
                                         //add the first keyword to the google spreadsheet
                                         //this should be the keyword you are specifically trying to rank for
                                         rows[currentURLLine].Keyword = keywords[0];
                                         rows[currentURLLine].Zipcode = zipcode;
+
+                                        var options = {
+                                            query: keywords[0],
+                                            limit: 15
+                                        }
+                                        var googleScapeCounter = 0;
+
+                                        googleScrape.search(options, function(err, url) {
+                                   			googleScapeCounter++;
+                                            if (err) {
+                                                console.log(err);
+                                            }
+                                            if (url) {
+                                                if (url.includes(websiteRoot)) {
+                                                	console.log('THIS WAS FOUND');
+                                                    rows[currentURLLine].Rank = googleScapeCounter;
+                                                } 
+                                            }
+                                        })
+                                     
                                     }
                                 });
                                 //adds the URL to the 'Page' header on the google doc
@@ -111,7 +130,7 @@ module.exports = {
                                         //increment line
                                         currentURLLine = currentURLLine + 1;
                                         step();
-                                    }, 1000) //this is the actually delay time on 1 second
+                                    }, 10000) //this is the actually delay time on 1 second
                             }
 
                         ], function(err, step) {
@@ -121,11 +140,11 @@ module.exports = {
                     })
                 });
             }
-        ],function(err, results){
-        	if(err){
-        		console.log(err);
-        	}
-        	console.log("Google Sheet done!");
+        ], function(err, results) {
+            if (err) {
+                console.log(err);
+            }
+            console.log("Google Sheet done!");
         });
     }
 
@@ -136,7 +155,7 @@ module.exports = {
 //   be used to show how many rows should be selected for the google spreadsheet.
 // */
 function getSitemapUrlLineLength() {
-	var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt');
+    var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt');
     sitemapURLSLineReader.on('error', function(error) {
         if (error) {
             console.log(error);
@@ -150,4 +169,31 @@ function getSitemapUrlLineLength() {
     sitemapURLSLineReader.on('end', function() {
         console.log("URLS in Sitemap: " + fileLineLength);
     });
+}
+
+function findKeywordRanking(keywordURL, keyword) {
+    var keywordRank = 0;
+    var finalRank = 99;
+    var options = {
+        query: keyword,
+        limit: 10
+    };
+
+    googleScrape.search(options, function(err, url) {
+        keywordRank++;
+
+        if (url) {
+            if (url.includes(keywordURL)) {
+                console.log("KEYWORD FOUND at " + keywordRank);
+                finalRank = keywordRank;
+                return finalRank;
+            } else {
+
+            }
+        }
+    })
+
+    return finalRank;
+
+
 }
