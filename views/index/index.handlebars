@@ -1,0 +1,30 @@
+{{#if user}}
+    <p>You are currently logged in as {{user.username}}</p>
+{{else}}
+    <p>You are currently not logged in. Please <a href="/login">login</a> or <a href="/register">register</a> ...</p>
+{{/if}}
+
+
+<div class="ui main text container cards">
+	{{#each blogs}}
+	<a class="ui card" href="blogs/{{_id}}">
+		<div class="content">
+			<div class="header">{{title}}</div>
+			<div class="meta">
+				<span class="category">{{created}}</span>
+			</div>
+			<div class="image">
+				<img class="ui cenetered rounded image" src="{{image}}">
+			</div>
+			<div class="description">
+				<p>{{trimString body}}</p>
+			</div>
+		</div>
+		<div class="extra content">
+			<div class="right floated author">
+				<p>{{owner}}</p>
+			</div>
+		</div>
+	</a>
+	{{/each}}
+</div>
