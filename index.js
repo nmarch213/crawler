@@ -1,4 +1,5 @@
 var express = require('express');
+var bodyParser = require("body-parser");
 
 
 var app = express();
@@ -12,11 +13,9 @@ var handlebars = require('express-handlebars')
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 
+app.use(bodyParser.urlencoded({extended: true}));
+
 app.set('port', process.env.PORT || 3000);
-
-const googleRunner = require('./xmlcrawler/googleSpreadsheet');
-
-//googleRunner.addContentToGoogleSpreadsheet('http://www.jbheatingandair.com/');
 
 //index routes
 app.use(indexRoutes);

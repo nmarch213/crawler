@@ -6,9 +6,9 @@ const GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
 const fs = require('fs'),
     readline = require('readline');
-const LineByLineReader = require('line-by-line'),
-    sitemapURLSLineReader = new LineByLineReader('sitemapURLS.txt');
+const LineByLineReader = require('line-by-line');
 const moment = require('moment');
+const googleScrape = require('google-search-scraper');
 
 const crawler = require('./crawler');
 
@@ -31,7 +31,9 @@ module.exports = {
         async.series([
             //This sets the google authentication, crawls the Sitemap of the given URL, get the line length of sitemap
             function setGoogleAuthentication(step) {
-                //calls the crawler.js
+
+                console.log("this is the website " + websiteRoot)
+                    //calls the crawler.js
                 crawler.crawlXmlSitemap(websiteRoot);
                 //load credentials
                 var creds = require('./../gcredentials.json');
@@ -62,7 +64,7 @@ module.exports = {
                 }, function(err, rows) {
                     console.log('Read ' + rows.length + ' rows');
                     var currentURLLine = 0;
-                    var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt');
+                    var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt', {skipEmptyLines: true});
                     //Reads reach of the lines of the sitemapURL file.
                     sitemapURLSLineReader.on('line', function(line) {
                         //another async function to ensure each step properly saves in google
@@ -82,11 +84,16 @@ module.exports = {
                                         //find the meta tag -> Keyword ->content
                                         //This find all the keywords
                                         var key = $('meta[name=keywords]').attr('content');
-                                        //split the keywords by ','
-                                        keywords = key.split(',');
+                                        if(key){
+											//split the keywords by ','
+                                        	keywords = key.split(',');
+                                        }
+                                        var zipcode = $('span[itemprop=postalCode]').text();
+                                        console.log("zipcode: " +zipcode);
                                         //add the first keyword to the google spreadsheet
                                         //this should be the keyword you are specifically trying to rank for
                                         rows[currentURLLine].Keyword = keywords[0];
+                                        rows[currentURLLine].Zipcode = zipcode;
                                     }
                                 });
                                 //adds the URL to the 'Page' header on the google doc
@@ -114,7 +121,12 @@ module.exports = {
                     })
                 });
             }
-        ]);
+        ],function(err, results){
+        	if(err){
+        		console.log(err);
+        	}
+        	console.log("Google Sheet done!");
+        });
     }
 
 }
@@ -124,6 +136,7 @@ module.exports = {
 //   be used to show how many rows should be selected for the google spreadsheet.
 // */
 function getSitemapUrlLineLength() {
+	var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt');
     sitemapURLSLineReader.on('error', function(error) {
         if (error) {
             console.log(error);
