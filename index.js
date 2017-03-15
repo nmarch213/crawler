@@ -1,20 +1,14 @@
-var request = require('request');
-var cheerio = require('cheerio');
+const request = require('request');
+const cheerio = require('cheerio');
 const parser = require('xml-parser');
-var URL = require('url-parse');
-var GoogleSpreadsheet = require('google-spreadsheet');
+const URL = require('url-parse');
+const GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
-var fs = require('fs'),
+const fs = require('fs'),
     readline = require('readline');
-var LineByLineReader = require('line-by-line'),
+const LineByLineReader = require('line-by-line'),
     sitemapURLSLineReader = new LineByLineReader('sitemapURLS.txt');
-keywordLineReader = new LineByLineReader('keyword.txt');
-
-var moment = require('moment');
-
-var rd = readline.createInterface({
-    input: fs.createReadStream('sitemapURLS.txt')
-});
+const moment = require('moment');
 
 const crawler = require('./xmlcrawler/crawler');
 
@@ -22,284 +16,87 @@ var doc = new GoogleSpreadsheet('1zKKeYJCWZr36NMbBWKZClN1dT9iQ_GOBsogRJGNAb9k');
 var sheet;
 
 var sitemapURLs = [];
-var parsedXmlString;
-var currentCellLocation = 0;
 var fileLineLength = 0;
 
 
 async.series([
-  function setAuth(step) {
-      //sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
-      var creds = require('./5+Y6TMffS+u#hP5@.json');
-      //getSitemapUrlLineLength();
-      doc.useServiceAccountAuth(creds, step);
-  },
-  function getInfoAndWorksheets(step) {
-      doc.getInfo(function(err, info) {
-          console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
-          sheet = info.worksheets[0];
-          console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
-          step();
-      });
-  },
-  function workingWithRows(step) {
-      // google provides some query options 
-      sheet.getRows({
-          offset: 1,
-          limit: 20,
-          orderby: 'col2'
-      }, function(err, rows) {
-          console.log('Read ' + rows.length + ' rows');
+    function setAuth(step) {
+        sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
+        var creds = require('./5+Y6TMffS+u#hP5@.json');
+        getSitemapUrlLineLength();
+        doc.useServiceAccountAuth(creds, step);
+    },
+    function getInfoAndWorksheets(step) {
+        doc.getInfo(function(err, info) {
+            console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
+            sheet = info.worksheets[0];
+            console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
+            step();
+        });
+    },
+    function workingWithRows(step) {
+        sheet.getRows({
+            offset: 1,
+            limit: fileLineLength + 1
+        }, function(err, rows) {
+            console.log('Read ' + rows.length + ' rows');
+            var currentURLLine = 0;
 
-          // the row is an object with keys set by the column headers 
-          rows[0].Page = 'new val';
-          rows[0].save(); // this is async
 
-          rows[7].Page = 'tester';
-          rows[14].lol1 = 'lol';
-          rows[14].save();
+            var sitemapURLSLineReader = new LineByLineReader('sitemapURLS.txt');
 
-          step();
-      });
-  }
+            sitemapURLSLineReader.on('line', function(line) {
+                async.series([
+                    function doGoogleStuff(step) {
+                        request(line, function(error, response, body) {
+                            if (error) {
+                                console.log("Error: " + error);
+                                return;
+                            }
+                            if (response.statusCode === 200) {
+                                var $ = cheerio.load(body);
+
+                                var key = $('meta[name=keywords]').attr('content');
+                                keywords = key.split(',');
+                                rows[currentURLLine].Keyword = keywords[0];
+                            }
+                        });
+                        rows[currentURLLine].Page = line;
+                        rows[currentURLLine].Rank = 0;
+                        rows[currentURLLine].Note = 'Initial Run';
+                        rows[currentURLLine].Date = moment().format('MMM Do YYYY, h:mm:ss a');
+                        sitemapURLSLineReader.pause();
+                        setTimeout(function() {
+                            rows[currentURLLine].save();
+                            currentURLLine = currentURLLine + 1;
+                            step();
+                        }, 1000)
+                    }
+
+                ], function(err, step) {
+                    sitemapURLSLineReader.resume();
+                })
+            })
+        });
+    }
 ]);
-
-// async.series([
-//         function setAuth(step) {
-//             sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
-//             var creds = require('./5+Y6TMffS+u#hP5@.json');
-//             //getSitemapUrlLineLength();
-//             doc.useServiceAccountAuth(creds, step);
-//         },
-
-//         function getInfoAndWorksheets(step) {
-//             doc.getInfo(function(err, info) {
-//                 if (err) {
-//                     console.log(err);
-//                 }
-//                 console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
-//                 /*
-//                   Worksheet[0] = Main list of clients
-//                   Worksheet[1] = The first named client to the right of the "main" sheet.
-
-//                   Sheet has these object properties you can get info from:
-//                   url - the URL for the sheet
-//                   id - the ID of the sheet
-//                   title -   the title (visible on the tabs in google's interface)
-//                   rowCount - number of rows
-//                   colCount - number of columns
-//                  */
-//                 sheet = info.worksheets[0];
-
-//                 console.log('sheet 1: ' + sheet.title);
-//                 step();
-//             });
-//         },
-//         function addToRows(step) {
-//             addToGoogleWorksheet("http://www.jbheatingandair.com/heating-repairs/", step);
-//         }
-//     ],
-//     function(error, results) {}
-// );
-
-// /*
-//   This function will modify the cells of a given row which is determined by the Sitemap URL link,
-//   this will also add the keyword specific to the URL and add it to the google spreadsheet.
-
-//   row - this will be the offset determined by which URL we are currently finding the keyword for
-//   sheet - This is just passing the given sheet, may not be needed but added for refactoring if needed
-//   numberOfRows - This will be determined by the line length of the 'URLSitemaps.txt'
-// */
-// function manipulateCell(row, numberOfRows, URL) {
-
-//     async.series([
-
-//         function runThisFirst(step) {
-//             console.log('sheet is: ' + sheet.info);
-//             sheet.getRows({
-//               offset: 0,
-//               limit: 20
-//             },function(err, rows){
-//               if(err){
-//                 console.log(err);
-//               }
-//               console.log('Read ' + rows.length + ' rows');
-
-//               rows[1].colname = URL;
-//               rows[0].save();
-
-//               step();
-//             })
-//             // sheet.getCells({
-//             //     'min-row': row,
-
-//             //     'max-row': row + 1, //just in case
-//             //     'return-empty': true
-//             // }, function(err, cells) {
-//             //     //var cell = cells[0];
-//             //     // console.log(cells[0].row + " " + cells[0].col);
-//             //     // console.log(cells[1].row + " " + cells[1].col);
-
-//             //     //edit the page
-//             //     cells[0].value = URL;
-//             //     //edit the rank
-//             //     cells[2].value = 'Not Checked';
-//             //     //edit the Notes
-//             //     cells[3].value = 'Initial Bot Scan';
-//             //     //add the date scanned
-//             //     cells[4].value = moment().format('MMM Do YYYY, h:mm:ss a');
-
-//             //     cells[0].save();
-//             //     cells[1].save();
-//             //     cells[2].save();
-//             //     cells[3].save();
-//             //     cells[4].save();
-//             //     setTimeout(function(){
-//             //     },3000);
-
-//             //     // sheet.bulkUpdateCells(cells, function(err) {
-//             //     //     if (err) {
-//             //     //         console.log(err);
-//             //     //     }
-//             //     // }); //async
-
-//             // });
-//             // step();
-//         },
-//         function thenRunThis(step) {}
-//     ], function(err, results) {
-//         if (err) {
-//             console.log(err);
-//         }
-//         sheet.bulkUpdateCells(cells, function(err) {
-//             if (err) {
-//                 console.log(err);
-//             }
-//         }); //async
-//     })
-
-// }
-
-
-//   Given A URL, this function creates a file 'keyword.txt', which is an array of
-//   keywords taken from anything with-in a <strong> on a given page.
-
-//   These keywords will be used to add the keywords to the Google Spreadsheet to track
-//   the ranking of a specific keyword on a page.
-
-// function getKeywordsFromURL(URL) {
-
-//     //looking through the url for strong tag, which are idealy the keyword
-//     request(URL, function(error, response, body) {
-//         if (error) {
-//             console.log("Error: " + error);
-//             return;
-//         }
-//         if (response.statusCode === 200) {
-//             var $ = cheerio.load(body);
-
-//             var key = $('meta[name=keywords]').attr('content');
-//             var keywords = key.split(',');
-//             //This jquery call iterates through each strong tag within the given URL, finding
-//             //the keywords for the specific URL
-//             //fs.truncate('./keyword.txt', 0, function() {});
-//             //Iterate through the strong tags, and write to 'keyword.txt'
-//             fs.appendFile("./keyword.txt", keywords[0] + '\n', function(err) {
-//                 if (err) {
-//                     return console.log(err)
-//                 }
-//             });
-
-//             sheet.getCells({
-//                 'min-row': 1,
-//                 'max-row': 5,
-//                 'return-empty': true
-//             }, function(err, cells) {
-
-//                 // console.log(cell[0].row + " " + cell[0].col);
-//                 // console.log(cell[1].row + " " + cell[1].col);
-//                 var cellTarget = 1;
-//                 var count = 0;
-//                 var keywordLineReader = new LineByLineReader('keyword.txt');
-
-//                 keywordLineReader.on('line', function(line) {
-//                     count++;
-//                     console.log(cellTarget);
-//                     cells[cellTarget].value = line;
-//                     cellTarget = cellTarget + 4;
-//                 });
-
-//                 //     sheet.bulkUpdateCells(cells, function(err) {
-//                 //     if (err) {
-//                 //         console.log(err);
-//                 //     }
-//                 // }); //async
-//             })
-//         }
-//     });
-
-// }
 
 // /*
 //   This function reads the 'sitemapURLS.txt', this also counts the line lengeth which should
 //   be used to show how many rows should be selected for the google spreadsheet.
 // */
-// function getSitemapUrlLineLength() {
-//     sitemapURLSLineReader.on('error', function(error) {
-//         if (error) {
-//             console.log(error);
-//         }
-//     })
-//     sitemapURLSLineReader.on('line', function(line) {
-//         fileLineLength++;
+function getSitemapUrlLineLength() {
+    sitemapURLSLineReader.on('error', function(error) {
+        if (error) {
+            console.log(error);
+        }
+    })
+    sitemapURLSLineReader.on('line', function(line) {
+        fileLineLength++;
 
-//         //console.log("this is the line: " + line);
-//     })
-//     sitemapURLSLineReader.on('end', function() {
-//         console.log("URLS in Sitemap: " + fileLineLength);
-//     });
-// }
-
-// /*
-//   This function will loop through each of the 'sitemapURLS.txt'
-//     Generate the specific keywords for index'd sitemapURL
-//     Add the 'URL' to the google worksheet
-//     Add the 'keywords' to the google worksheet
-//     Set the 'rank' to unchecked
-//     Set the 'notes' to n/a
-// */
-
-// function addToGoogleWorksheet(URL) {
-//     console.log("adding to google worksheet")
-//     var currentURLLine = 0;
-//     var row = 1;
-
-//     async.series([
-//         function runGoogleStuff(step) {
-//             console.log("running google")
-//             urlReader = new LineByLineReader('sitemapURLS.txt');
-//             //getSitemapUrlLineLength();
-//             //iterates through the enitre 'sitemapURLS.txt'
-//             urlReader.on('error', function(error) {
-//                 if (error) {
-//                     console.log(error);
-//                 }
-//             })
-//             urlReader.on('line', function(line) {
-//                 //counts which line we are on
-//                 currentURLLine++;
-//                 //row is total rows / 4, since there are 4 columns
-//                 row = row + 1;
-//                 getKeywordsFromURL(line);
-//                 manipulateCell(row, fileLineLength, line);
-//             })
-//             urlReader.on('end', function(step) {})
-//             step();
-//         }
-//     ], function(error, endstep) {
-//         if (error) {
-//             console.log(error);
-//             console.log(endstep);
-//         }
-//     })
-// }
+        //console.log("this is the line: " + line);
+    })
+    sitemapURLSLineReader.on('end', function() {
+        console.log("URLS in Sitemap: " + fileLineLength);
+    });
+}
