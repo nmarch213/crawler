@@ -30,7 +30,7 @@ async.series([
         //calls the crawler.js
         sitemapURLs = crawler.crawlXmlSitemap('http://www.jbheatingandair.com');
         //load credentials
-        var creds = require('./5+Y6TMffS+u#hP5@.json');
+        var creds = require('./gcredentials.json');
         //sets linelength
         getSitemapUrlLineLength();
         //google spreadsheet authentication
