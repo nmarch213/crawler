@@ -86,31 +86,34 @@ module.exports = {
                                         var $ = cheerio.load(body);
                                         //find the meta tag -> Keyword ->content
                                         //This find all the keywords
-                                        var key = $('meta[name=keywords]').attr('content');
+                                        var key = $('title').text();
+                                        console.log(key);
                                         if (key) {
+     										console.log(key)
                                             //split the keywords by ','
-                                            keywords = key.split(',');
+                                            keywords = key.split('|');
                                         }
                                         var zipcode = $('span[itemprop=postalCode]').text();
                                         var state = $('span[itemprop=addressRegion]').text();
                                         //This is finding the location for the google search, this is found using this tooL:
                                         //https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
                                         //This explains how this uule is formed.
-                                        madison.getStateName(state, function(stateFullName) {
-                                        		var uuleRoot = 'w+CAIQICI';
-                                                var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
-                                                var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
-                                                var bytes = utf8.encode(uuleStringPrior);
-                                                var canonEncoded = base64.encode(bytes);
+                                        // madison.getStateName(state, function(stateFullName) {
+                                        // 		var uuleRoot = 'w+CAIQICI';
+                                        //         var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
+                                        //         var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
+                                        //         var bytes = utf8.encode(uuleStringPrior);
+                                        //         var canonEncoded = base64.encode(bytes);
 
-                                                var uule = uuleRoot + uuleSecretKey + canonEncoded;
+                                        //         var uule = uuleRoot + uuleSecretKey + canonEncoded;
+                                        //     });
+                                                rows[currentURLLine].uule = getWebsiteLocalizedSearchUULE(zipcode, state);
 
-                                                console.log("this is the uule: " + uule);
-
-                                            })
                                             //add the first keyword to the google spreadsheet
                                             //this should be the keyword you are specifically trying to rank for
-                                        rows[currentURLLine].Keyword = keywords[0];
+                                        if(keywords){
+                                        	rows[currentURLLine].Keyword = keywords[0];
+                                        }
                                         rows[currentURLLine].Zipcode = zipcode;
 
                                         var options = {
@@ -122,9 +125,6 @@ module.exports = {
                                         googleScrape.search(options, function(err, url) {
                                             googleScapeCounter++;
                                             if (err) {
-                                                setTimeout(function() {
-                                                    console.log('longer timout for captcha')
-                                                }, 10000);
                                                 console.log(err);
                                             }
                                             if (url) {
@@ -139,8 +139,6 @@ module.exports = {
                                 });
                                 //adds the URL to the 'Page' header on the google doc
                                 rows[currentURLLine].Page = line;
-                                //adds a dummy rank to the 'Rank' header on the google doc
-                                rows[currentURLLine].Rank = 0;
                                 rows[currentURLLine].Note = 'Initial Run';
                                 rows[currentURLLine].Date = moment().format('MMM Do YYYY, h:mm:ss a');
                                 //this pauses the file line reader to ensure all the data is read from File i/o, and HTTP request
@@ -152,7 +150,7 @@ module.exports = {
                                         //increment line
                                         currentURLLine = currentURLLine + 1;
                                         step();
-                                    }, 10000) //this is the actually delay time on 1 second
+                                    }, 10000*Math.random(1,100)) //this is the actually delay time on 1 second
                             }
 
                         ], function(err, step) {
@@ -220,8 +218,11 @@ function findKeywordRanking(keywordURL, keyword) {
 
 }
 
-//This take the str length of the canonical name and uses this website to determine key
-//https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
+/*
+	This take the str length of the canonical name and uses this website to determine key
+	https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
+	strLength: This is the stringlength of the canonical name, used as the secret key
+*/
 function findSecretKeyForUULE(strlength) {
     switch (strlength) {
         case 20:
@@ -285,4 +286,29 @@ function findSecretKeyForUULE(strlength) {
             return 'n';
             break;
     }
+}
+
+/*
+	This function provides the google localized search UULE.
+
+	zipcode: The state zipcode
+	state: The abbreviated state
+*/
+
+function getWebsiteLocalizedSearchUULE(zipcode, state){
+
+  var uuleRoot = 'w+CAIQICI';
+  var uule;
+
+  madison.getStateName(state, function(stateFullName){
+
+    var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
+    var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
+    var bytes = utf8.encode(uuleStringPrior);
+    var canonEncoded = base64.encode(bytes);
+
+    uule = uuleRoot + uuleSecretKey + canonEncoded;
+  })
+
+  return uule;
 }
