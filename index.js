@@ -21,6 +21,6 @@ app.set('port', process.env.PORT || 3000);
 app.use(indexRoutes);
 
 app.listen(app.get('port'), function(){
-  console.log( 'SEOCrawl Live' +
+  console.log( 'SEOCrawl Live ' +
     app.get('port') + '; press Ctrl-C to terminate.' );
 });

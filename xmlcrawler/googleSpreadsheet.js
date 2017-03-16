@@ -9,6 +9,9 @@ const fs = require('fs'),
 const LineByLineReader = require('line-by-line');
 const moment = require('moment');
 const googleScrape = require('google-search-scraper');
+const madison = require('madison');
+const utf8 = require('utf8');
+const base64 = require('base-64');
 
 const crawler = require('./crawler');
 
@@ -89,30 +92,49 @@ module.exports = {
                                             keywords = key.split(',');
                                         }
                                         var zipcode = $('span[itemprop=postalCode]').text();
-                                        //add the first keyword to the google spreadsheet
-                                        //this should be the keyword you are specifically trying to rank for
+                                        var state = $('span[itemprop=addressRegion]').text();
+                                        //This is finding the location for the google search, this is found using this tooL:
+                                        //https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
+                                        //This explains how this uule is formed.
+                                        madison.getStateName(state, function(stateFullName) {
+                                        		var uuleRoot = 'w+CAIQICI';
+                                                var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
+                                                var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
+                                                var bytes = utf8.encode(uuleStringPrior);
+                                                var canonEncoded = base64.encode(bytes);
+
+                                                var uule = uuleRoot + uuleSecretKey + canonEncoded;
+
+                                                console.log("this is the uule: " + uule);
+
+                                            })
+                                            //add the first keyword to the google spreadsheet
+                                            //this should be the keyword you are specifically trying to rank for
                                         rows[currentURLLine].Keyword = keywords[0];
                                         rows[currentURLLine].Zipcode = zipcode;
 
                                         var options = {
                                             query: keywords[0],
-                                            limit: 15
+                                            limit: 10
                                         }
                                         var googleScapeCounter = 0;
 
                                         googleScrape.search(options, function(err, url) {
-                                   			googleScapeCounter++;
+                                            googleScapeCounter++;
                                             if (err) {
+                                                setTimeout(function() {
+                                                    console.log('longer timout for captcha')
+                                                }, 10000);
                                                 console.log(err);
                                             }
                                             if (url) {
                                                 if (url.includes(websiteRoot)) {
-                                                	console.log('THIS WAS FOUND');
+                                                    console.log('THIS WAS FOUND');
                                                     rows[currentURLLine].Rank = googleScapeCounter;
-                                                } 
+                                                }
                                             }
                                         })
-                                     
+
                                     }
                                 });
                                 //adds the URL to the 'Page' header on the google doc
@@ -196,4 +218,71 @@ function findKeywordRanking(keywordURL, keyword) {
     return finalRank;
 
 
+}
+
+//This take the str length of the canonical name and uses this website to determine key
+//https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
+function findSecretKeyForUULE(strlength) {
+    switch (strlength) {
+        case 20:
+            return 'U';
+            break;
+        case 21:
+            return 'V';
+            break;
+        case 22:
+            return 'W';
+            break;
+        case 23:
+            return 'X';
+            break;
+        case 24:
+            return 'Y';
+            break;
+        case 25:
+            return 'Z';
+            break;
+        case 26:
+            return 'a';
+            break;
+        case 27:
+            return 'b';
+            break;
+        case 28:
+            return 'c';
+            break;
+        case 29:
+            return 'd';
+            break;
+        case 30:
+            return 'e';
+            break;
+        case 31:
+            return 'f';
+            break;
+        case 32:
+            return 'g';
+            break;
+        case 33:
+            return 'h';
+            break;
+        case 34:
+            return 'i';
+            break;
+        case 35:
+            return 'j';
+            break;
+        case 36:
+            return 'k';
+            break;
+        case 37:
+            return 'l';
+            break;
+        case 38:
+            return 'm';
+            break;
+        case 39:
+            return 'n';
+            break;
+    }
 }
