@@ -26,7 +26,92 @@ var fileLineLength = 0;
 
 module.exports = {
 
-    addContentToGoogleSpreadsheet: function(websiteRoot) {
+    localizedKeywordSearch: function(websiteRoot, keywords) {
+
+    	var uule;
+
+        async.series([
+            function setGoogleAuthentication(step) {
+                //load credentials
+                var creds = require('./../gcredentials.json');
+                //google spreadsheet authentication
+                doc.useServiceAccountAuth(creds, step);
+            },
+            function getInfoAndWorksheets(step) {
+                doc.getInfo(function(err, info) {
+                    console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
+                    sheet = info.worksheets[0];
+                    console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
+                    step();
+                });
+            },
+            function getLocalizedUULE(step){
+            	request(websiteRoot, function(error, response, body){
+            		if(error){
+            			console.log("Error: " + error);
+            			return;
+            		}
+            		if(response.statusCode === 200){
+            			var $ = cheerio.load(body);
+
+            			var zipcode = $('span[itemprop=postalCode]').text();
+						var state = $('span[itemprop=addressRegion]').text();
+						uule = getWebsiteLocalizedSearchUULE(zipcode, state);
+            		}
+            	})
+            },
+            function findKeyword(step) {
+
+                var keywordArray = keywords.split(',');
+
+                for (var i = 0; i < keywordArray.length; i++) {
+                    async.series([
+                        function saveInfoToGoogleSpreadSheet(step) {
+                            sheet.getRows({
+                            	offset: 1,
+                            	limit: keywordArray.length
+                            },function(err, rows){
+                            	if(err){
+                            		console.log('ERROR: ' + err)
+                            	}
+
+                            	var options = {
+                            		query: keywordArray[i],
+                            		limit: 20,
+                            		params: '&uule=' + uule
+                            		
+                            	}
+                            	var googleScapeCounter = 0;
+
+                            	googleScrape.search(option, function(err, url){
+                            		if(err){
+                            			console.log(err)
+                            		}
+                            		if(url){
+                            			if(url.includes(websiteRoot)){
+                            				console.log("THIS WAS FOUND");
+                            				rows[i].Rank = googleScapeCounter;
+                            				rows[i].Page = url;
+                            				rows[i].Note = 'Keyword Search';
+                               				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
+										}else{
+											rows[i].Page = url;
+                            				rows[i].Note = 'Keyword Search';
+                            				rows[i].Rank = 0;
+                               				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
+										}
+                            		}
+                            	})
+                            })
+                            step();
+                        }
+                    ]);
+                }
+            }
+        ]);
+    },
+
+        addContentToGoogleSpreadsheet: function(websiteRoot) {
 
 
         //This is an asyncrhronous series that executes each function before continuing to the next 'step'
@@ -89,8 +174,8 @@ module.exports = {
                                         var key = $('title').text();
                                         console.log(key);
                                         if (key) {
-     										console.log(key)
-                                            //split the keywords by ','
+                                            console.log(key)
+                                                //split the keywords by ','
                                             keywords = key.split('|');
                                         }
                                         var zipcode = $('span[itemprop=postalCode]').text();
@@ -107,12 +192,12 @@ module.exports = {
 
                                         //         var uule = uuleRoot + uuleSecretKey + canonEncoded;
                                         //     });
-                                                rows[currentURLLine].uule = getWebsiteLocalizedSearchUULE(zipcode, state);
+                                        rows[currentURLLine].uule = getWebsiteLocalizedSearchUULE(zipcode, state);
 
-                                            //add the first keyword to the google spreadsheet
-                                            //this should be the keyword you are specifically trying to rank for
-                                        if(keywords){
-                                        	rows[currentURLLine].Keyword = keywords[0];
+                                        //add the first keyword to the google spreadsheet
+                                        //this should be the keyword you are specifically trying to rank for
+                                        if (keywords) {
+                                            rows[currentURLLine].Keyword = keywords[0];
                                         }
                                         rows[currentURLLine].Zipcode = zipcode;
 
@@ -150,7 +235,7 @@ module.exports = {
                                         //increment line
                                         currentURLLine = currentURLLine + 1;
                                         step();
-                                    }, 10000*Math.random(1,100)) //this is the actually delay time on 1 second
+                                    }, 10000 * Math.random(1, 100)) //this is the actually delay time on 1 second
                             }
 
                         ], function(err, step) {
@@ -170,10 +255,10 @@ module.exports = {
 
 }
 
-// /*
-//   This function reads the 'sitemapURLS.txt', this also counts the line lengeth which should
-//   be used to show how many rows should be selected for the google spreadsheet.
-// */
+/*
+  This function reads the 'sitemapURLS.txt', this also counts the line lengeth which should
+  be used to show how many rows should be selected for the google spreadsheet.
+*/
 function getSitemapUrlLineLength() {
     var sitemapURLSLineReader = new LineByLineReader('./sitemapURLS.txt');
     sitemapURLSLineReader.on('error', function(error) {
@@ -191,6 +276,12 @@ function getSitemapUrlLineLength() {
     });
 }
 
+
+/*
+	This function finds the ranking of a specific keyword, and search for the URL
+
+	keywordURL: 
+*/
 function findKeywordRanking(keywordURL, keyword) {
     var keywordRank = 0;
     var finalRank = 99;
@@ -212,10 +303,7 @@ function findKeywordRanking(keywordURL, keyword) {
             }
         }
     })
-
     return finalRank;
-
-
 }
 
 /*
@@ -295,20 +383,20 @@ function findSecretKeyForUULE(strlength) {
 	state: The abbreviated state
 */
 
-function getWebsiteLocalizedSearchUULE(zipcode, state){
+function getWebsiteLocalizedSearchUULE(zipcode, state) {
 
-  var uuleRoot = 'w+CAIQICI';
-  var uule;
+    var uuleRoot = 'w+CAIQICI';
+    var uule;
 
-  madison.getStateName(state, function(stateFullName){
+    madison.getStateName(state, function(stateFullName) {
 
-    var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
-    var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
-    var bytes = utf8.encode(uuleStringPrior);
-    var canonEncoded = base64.encode(bytes);
+        var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
+        var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
+        var bytes = utf8.encode(uuleStringPrior);
+        var canonEncoded = base64.encode(bytes);
 
-    uule = uuleRoot + uuleSecretKey + canonEncoded;
-  })
+        uule = uuleRoot + uuleSecretKey + canonEncoded;
+    })
 
-  return uule;
+    return uule;
 }
