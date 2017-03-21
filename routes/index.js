@@ -13,11 +13,11 @@ router.post('/runGoogleAdder', function(req, res){
 	var url = req.body.url;
 	var keywords = req.body.keywords;
 	googleRunner.localizedKeywordSearch(url, keywords);
-	res.render('index/results');
+	res.render('results');
 });
 
 router.get('/results', function(req, res){
-	Results.find().sort({created: -1}).exec(function(err, results){
+	Results.find().sort({created: 1}).exec(function(err, results){
 		if(err){
 			console.log(err);
 		}else{
