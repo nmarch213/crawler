@@ -6,10 +6,19 @@
 	</header>
 </div>
 
+
 <div class="container">
 	<form action="/runGoogleAdder" method="post">
-		<input type="text" name="url" placeholder="Enter the website root URL">
-		<input type="text" name="keywords" placeholder="Please enter keywords separated by commas">
-		<button type="submit">Run Google Adder</button>
+		<div class="form-group">
+			<label for="url">Website url</label>
+			<input type="text" name="url" id="url" placeholder="Website URL" class="form-control">
+			<p class="help-block">Please include full url: ex: "http://www.google.com/"</p>
+		</div>
+		<div class="form-group">
+			<label for="keywords">Keyword(s) to search</label>
+			<input type="text" name="keywords" class="form-control" placeholder="Keyword(s)">
+			<p class="help-block">Enter one, or many keywords separated by a comma. ex: "eggs, milk, cereal"</p>
+		</div>
+		<button type="submit" class="btn btn-default">Submit</button>
 	</form>
 </div>

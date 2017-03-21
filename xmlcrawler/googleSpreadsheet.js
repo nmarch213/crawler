@@ -28,7 +28,7 @@ module.exports = {
 
     localizedKeywordSearch: function(websiteRoot, keywords) {
 
-    	var uule;
+        var uule;
 
         async.series([
             function setGoogleAuthentication(step) {
@@ -45,82 +45,38 @@ module.exports = {
                     step();
                 });
             },
-            function getLocalizedUULE(step){
-            	request(websiteRoot, function(error, response, body){
-            		if(error){
-            			console.log("Error: " + error);
-            			return;
-            		}
-            		if(response.statusCode === 200){
-            			var $ = cheerio.load(body);
+            function getLocalizedUULE(step) {
+                request(websiteRoot, function(error, response, body) {
+                    if (error) {
+                        console.log("Error: " + error);
+                        return;
+                    }
+                    if (response.statusCode === 200) {
+                        var $ = cheerio.load(body);
 
-            			var zipcode = $('span[itemprop=postalCode]').text();
-						var state = $('span[itemprop=addressRegion]').text();
-						uule = getWebsiteLocalizedSearchUULE(zipcode, state);
-            		}
-            	})
-            	step();
+                        var zipcode = $('span[itemprop=postalCode]').text();
+                        var state = $('span[itemprop=addressRegion]').text();
+                        uule = getWebsiteLocalizedSearchUULE(zipcode, state);
+                        setTimeout(function() {
+                            step();
+                        }, 1000);
+                    }
+                })
             },
             function findKeyword(step) {
 
-                var keywordArray = keywords.split(',');
+                var keywordArray = keywords.split(', ');
 
                 for (var i = 0; i < keywordArray.length; i++) {
-                	console.log(keywordArray[i]);
-                }
+                    console.log("this should be the search: " + keywordArray[i])
 
-                for (var i = 0; i < keywordArray.length; i++) {
-                    async.series([
-                        function saveInfoToGoogleSpreadSheet(step) {
-                            sheet.getRows({
-                            	offset: 1,
-                            	limit: keywordArray.length
-                            },function(err, rows){
-                            	if(err){
-                            		console.log('ERROR: ' + err)
-                            	}
-
-                            	customGoogleSearch(uule, keywords, websiteRoot);
-
-          //                   	var options = {
-          //                   		query: keywordArray[i],
-          //                   		limit: 20
-                            		
-          //                   	}
-          //                   	var googleScapeCounter = 0;
-
-          //                   	googleScrape.search(options, function(err, url){
-          //                   		if(err){
-          //                   			console.log(err)
-          //                   		}
-          //                   		if(url){
-          //                   			if(url.includes(websiteRoot)){
-          //                   				console.log("THIS WAS FOUND");
-          //                   				rows[i].Rank = googleScapeCounter;
-          //                   				rows[i].Page = url;
-          //                   				rows[i].Note = 'Keyword Search';
-          //                      				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
-          //                   				rows[i].save();
-										// }else{
-										// 	rows[i].Page = url;
-          //                   				rows[i].Note = 'Keyword Search';
-          //                   				rows[i].Rank = 0;
-          //                      				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
-										// 	rows[i].save();
-										// }
-          //                   		}
-          //                   	})
-                            	setTimeout(function(){
-                            		console.log("delaying now")}, 5000);
-                            })
-                        }
-                    ]);
+                    customGoogleSearch(uule, keywordArray[i], websiteRoot);
                 }
             }
         ]);
     },
 
-        addContentToGoogleSpreadsheet: function(websiteRoot) {
+    addContentToGoogleSpreadsheet: function(websiteRoot) {
 
 
         //This is an asyncrhronous series that executes each function before continuing to the next 'step'
@@ -390,6 +346,8 @@ function findSecretKeyForUULE(strlength) {
 
 	zipcode: The state zipcode
 	state: The abbreviated state
+
+	@return - This returns the string which is to be used to localized search
 */
 
 function getWebsiteLocalizedSearchUULE(zipcode, state) {
@@ -409,30 +367,49 @@ function getWebsiteLocalizedSearchUULE(zipcode, state) {
 
     return uule;
 }
+/*
+	This function creates a custom google search then crawls the specific google search, only
+	for the first 10 results. If ranking below 10, considered not to be ranking.
 
-function customGoogleSearch(uule, query, websiteRoot){
+	uule - This is used to localize your searches.
+	query - This is intended to be the google search query, usually the keyword.
+	websiteRoot - The website URL you are looking to see if the keyword ranks.
 
-	rootUrl = websiteRoot.split('//');	
+	@return - If the websiteRoot is find in the results, return the rank.
+			  If no rank is found return 99
+*/
+function customGoogleSearch(uule, query, websiteRoot) {
 
-	request('http://www.google.com/search?q=' + query + '&uule=' + uule, function(error, response, body){
-		if(error){
-			console.log(error);
-		}
-		var $ = cheerio.load(body);
+    rootUrl = websiteRoot.split('//');
+    var rank = 99;
 
-		//var urls = $('cite').text();
-		var urlArray = [];
-		$('cite').each(function(i, elem){
-			urlArray[i] = $(this).text();
-		})
+    var GoogleSearch = 'http://www.google.com/search?q=' + query + '&uule=' + uule;
 
-		setTimeout(function(){
-			console.log("running google search");
-		for (var i = 0; i < urlArray.length; i++) {
-			if(urlArray[i].includes(rootUrl[1]))
-			console.log(i + " is at " + urlArray[i]);
-		}}, 5000);
+    request(GoogleSearch, function(error, response, body) {
+        console.log("Running google search at: " + GoogleSearch);
+        if (error) {
+            console.log(error);
+        }
+        var $ = cheerio.load(body);
 
-	})
+
+        var googleSearchCiteResults = [];
+        $('cite').each(function(i, elem) {
+            googleSearchCiteResults[i] = $(this).text();
+        })
+
+        setTimeout(function() {
+            for (var i = 0; i < googleSearchCiteResults.length; i++) {
+                if (googleSearchCiteResults[i].includes(rootUrl[1])) {
+                	var realRank = i+1;
+                    console.log(query + " ranks at " + realRank + ". The site found: " + googleSearchCiteResults[i]);
+                    rank = i;
+                }
+            }
+        }, 5000);
+
+    })
+
+    return rank;
 
 }
