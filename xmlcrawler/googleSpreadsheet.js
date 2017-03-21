@@ -39,9 +39,9 @@ module.exports = {
             },
             function getInfoAndWorksheets(step) {
                 doc.getInfo(function(err, info) {
-                    console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
+                    //console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
                     sheet = info.worksheets[0];
-                    console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
+                    //console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
                     step();
                 });
             },
@@ -66,14 +66,25 @@ module.exports = {
             function findKeyword(step) {
 
                 var keywordArray = keywords.split(', ');
+                console.log("Keyword Search for " + websiteRoot + " has begun.")
 
                 for (var i = 0; i < keywordArray.length; i++) {
-                    console.log("this should be the search: " + keywordArray[i])
+                    //console.log("this should be the search: " + keywordArray[i])
 
-                    customGoogleSearch(uule, keywordArray[i], websiteRoot);
+                    var rank = customGoogleSearch(uule, keywordArray[i], websiteRoot);
+
+                    setTimeout(function() {
+                            console.log(rank);
+                        }, 5000);
                 }
+                step();
             }
-        ]);
+        ], function(error, results){
+        	if(error){
+        		console.log(error);
+        	}
+        	console.log("Keyword Search Complete!");
+        });
     },
 
     addContentToGoogleSpreadsheet: function(websiteRoot) {
@@ -403,7 +414,7 @@ function customGoogleSearch(uule, query, websiteRoot) {
                 if (googleSearchCiteResults[i].includes(rootUrl[1])) {
                 	var realRank = i+1;
                     console.log(query + " ranks at " + realRank + ". The site found: " + googleSearchCiteResults[i]);
-                    rank = i;
+                    return rank = i;
                 }
             }
         }, 5000);
