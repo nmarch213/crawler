@@ -1,0 +1,19 @@
+<div class="container">
+<table class="table table-bordered">
+	<tr>
+		<th>Website Searched For</th>
+		<th>Rank</th>
+		<th>Keyword</th>
+		<th>Date Searched</th>
+	</tr>
+	{{#each results}}
+	<tr>
+		<td>{{websiteRoot}}</td>
+		<td>{{rank}}</td>
+		<td>{{keyword}}</td>
+		<td>{{dateFound}}</td>
+		<td>{{websiteFound}}</td>
+	</tr>
+	{{/each}}
+</table>
+</div>

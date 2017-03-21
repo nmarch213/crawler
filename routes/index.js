@@ -13,15 +13,15 @@ router.post('/runGoogleAdder', function(req, res){
 	var url = req.body.url;
 	var keywords = req.body.keywords;
 	googleRunner.localizedKeywordSearch(url, keywords);
-	res.render('index');
+	res.render('index/results');
 });
 
 router.get('/results', function(req, res){
-	Results.find({}).sort({created: -1}).exec(function(err, blogs){
+	Results.find().sort({created: -1}).exec(function(err, results){
 		if(err){
 			console.log(err);
 		}else{
-			res.render('results', {results:results});
+			res.render('index/results', {results:results});
 		}
 	})
 })
