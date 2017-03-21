@@ -15,6 +15,10 @@ const base64 = require('base-64');
 
 const crawler = require('./crawler');
 
+//db
+var Results = require('../models/quickResults.js');
+var mongoose = require('mongoose');
+
 //This google spreadsheet id is taken from a specific google sheet.
 // example: https://docs.google.com/spreadsheets/d/1zKKeYJCWZr36NMbBWKZClN1dT9iQ_GOBsogRJGNAb9k/edit#gid=0
 //                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -71,19 +75,18 @@ module.exports = {
                 for (var i = 0; i < keywordArray.length; i++) {
                     //console.log("this should be the search: " + keywordArray[i])
 
-                    var rank = customGoogleSearch(uule, keywordArray[i], websiteRoot);
+                    customGoogleSearch(uule, keywordArray[i], websiteRoot);
 
                     setTimeout(function() {
-                            console.log(rank);
-                        }, 5000);
+                    }, 5000);
                 }
                 step();
             }
-        ], function(error, results){
-        	if(error){
-        		console.log(error);
-        	}
-        	console.log("Keyword Search Complete!");
+        ], function(error, results) {
+            if (error) {
+                console.log(error);
+            }
+            console.log("Keyword Search Complete!");
         });
     },
 
@@ -160,7 +163,7 @@ module.exports = {
                                         //https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
                                         //This explains how this uule is formed.
                                         // madison.getStateName(state, function(stateFullName) {
-                                        // 		var uuleRoot = 'w+CAIQICI';
+                                        //      var uuleRoot = 'w+CAIQICI';
                                         //         var uuleStringPrior = zipcode + ',' + stateFullName + ',United States';
                                         //         var uuleSecretKey = findSecretKeyForUULE(uuleStringPrior.length);
                                         //         var bytes = utf8.encode(uuleStringPrior);
@@ -254,9 +257,9 @@ function getSitemapUrlLineLength() {
 
 
 /*
-	This function finds the ranking of a specific keyword, and search for the URL
+    This function finds the ranking of a specific keyword, and search for the URL
 
-	keywordURL: 
+    keywordURL: 
 */
 function findKeywordRanking(keywordURL, keyword) {
     var keywordRank = 0;
@@ -283,9 +286,9 @@ function findKeywordRanking(keywordURL, keyword) {
 }
 
 /*
-	This take the str length of the canonical name and uses this website to determine key
-	https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
-	strLength: This is the stringlength of the canonical name, used as the secret key
+    This take the str length of the canonical name and uses this website to determine key
+    https://moz.com/ugc/geolocation-the-ultimate-tip-to-emulate-local-search
+    strLength: This is the stringlength of the canonical name, used as the secret key
 */
 function findSecretKeyForUULE(strlength) {
     switch (strlength) {
@@ -353,12 +356,12 @@ function findSecretKeyForUULE(strlength) {
 }
 
 /*
-	This function provides the google localized search UULE.
+    This function provides the google localized search UULE.
 
-	zipcode: The state zipcode
-	state: The abbreviated state
+    zipcode: The state zipcode
+    state: The abbreviated state
 
-	@return - This returns the string which is to be used to localized search
+    @return - This returns the string which is to be used to localized search
 */
 
 function getWebsiteLocalizedSearchUULE(zipcode, state) {
@@ -379,15 +382,15 @@ function getWebsiteLocalizedSearchUULE(zipcode, state) {
     return uule;
 }
 /*
-	This function creates a custom google search then crawls the specific google search, only
-	for the first 10 results. If ranking below 10, considered not to be ranking.
+    This function creates a custom google search then crawls the specific google search, only
+    for the first 10 results. If ranking below 10, considered not to be ranking.
 
-	uule - This is used to localize your searches.
-	query - This is intended to be the google search query, usually the keyword.
-	websiteRoot - The website URL you are looking to see if the keyword ranks.
+    uule - This is used to localize your searches.
+    query - This is intended to be the google search query, usually the keyword.
+    websiteRoot - The website URL you are looking to see if the keyword ranks.
 
-	@return - If the websiteRoot is find in the results, return the rank.
-			  If no rank is found return 99
+    @return - If the websiteRoot is find in the results, return the rank.
+              If no rank is found return 99
 */
 function customGoogleSearch(uule, query, websiteRoot) {
 
@@ -412,15 +415,28 @@ function customGoogleSearch(uule, query, websiteRoot) {
         setTimeout(function() {
             for (var i = 0; i < googleSearchCiteResults.length; i++) {
                 if (googleSearchCiteResults[i].includes(rootUrl[1])) {
-                	var realRank = i+1;
+                    var realRank = i + 1;
+
+                    var newResult = ({
+                        websiteRoot: websiteRoot,
+                        rank: realRank,
+                        websiteFound: googleSearchCiteResults[i],
+                        keyword: query,
+                        dateFound: moment().format('MMM Do YYYY, h:mm:ss a')
+                    });
+                    console.log(newResult);
+                    Results.create(newResult, function(err, newResultAdded) {
+                        if (err) {
+                            console.log(err);
+                        }
+
+                        console.log("New Result Added Successfully");
+                    });
+
                     console.log(query + " ranks at " + realRank + ". The site found: " + googleSearchCiteResults[i]);
-                    return rank = i;
                 }
             }
         }, 5000);
 
     })
-
-    return rank;
-
 }

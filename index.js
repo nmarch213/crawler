@@ -7,6 +7,10 @@ var app = express();
 //Routes
 var indexRoutes = require('./routes/index.js');
 
+// database configuration
+var dbSettings = require("./lib/database.js");
+dbSettings.populateDBSettings(app);
+
 // set up handlebars view engine
 var handlebars = require('express-handlebars')
   .create({ defaultLayout:'main' });
