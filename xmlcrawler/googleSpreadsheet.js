@@ -59,10 +59,15 @@ module.exports = {
 						uule = getWebsiteLocalizedSearchUULE(zipcode, state);
             		}
             	})
+            	step();
             },
             function findKeyword(step) {
 
                 var keywordArray = keywords.split(',');
+
+                for (var i = 0; i < keywordArray.length; i++) {
+                	console.log(keywordArray[i]);
+                }
 
                 for (var i = 0; i < keywordArray.length; i++) {
                     async.series([
@@ -75,35 +80,39 @@ module.exports = {
                             		console.log('ERROR: ' + err)
                             	}
 
-                            	var options = {
-                            		query: keywordArray[i],
-                            		limit: 20,
-                            		params: '&uule=' + uule
-                            		
-                            	}
-                            	var googleScapeCounter = 0;
+                            	customGoogleSearch(uule, keywords, websiteRoot);
 
-                            	googleScrape.search(option, function(err, url){
-                            		if(err){
-                            			console.log(err)
-                            		}
-                            		if(url){
-                            			if(url.includes(websiteRoot)){
-                            				console.log("THIS WAS FOUND");
-                            				rows[i].Rank = googleScapeCounter;
-                            				rows[i].Page = url;
-                            				rows[i].Note = 'Keyword Search';
-                               				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
-										}else{
-											rows[i].Page = url;
-                            				rows[i].Note = 'Keyword Search';
-                            				rows[i].Rank = 0;
-                               				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
-										}
-                            		}
-                            	})
+          //                   	var options = {
+          //                   		query: keywordArray[i],
+          //                   		limit: 20
+                            		
+          //                   	}
+          //                   	var googleScapeCounter = 0;
+
+          //                   	googleScrape.search(options, function(err, url){
+          //                   		if(err){
+          //                   			console.log(err)
+          //                   		}
+          //                   		if(url){
+          //                   			if(url.includes(websiteRoot)){
+          //                   				console.log("THIS WAS FOUND");
+          //                   				rows[i].Rank = googleScapeCounter;
+          //                   				rows[i].Page = url;
+          //                   				rows[i].Note = 'Keyword Search';
+          //                      				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
+          //                   				rows[i].save();
+										// }else{
+										// 	rows[i].Page = url;
+          //                   				rows[i].Note = 'Keyword Search';
+          //                   				rows[i].Rank = 0;
+          //                      				rows[i].Date = moment().format('MMM Do YYYY, h:mm:ss a');
+										// 	rows[i].save();
+										// }
+          //                   		}
+          //                   	})
+                            	setTimeout(function(){
+                            		console.log("delaying now")}, 5000);
                             })
-                            step();
                         }
                     ]);
                 }
@@ -399,4 +408,31 @@ function getWebsiteLocalizedSearchUULE(zipcode, state) {
     })
 
     return uule;
+}
+
+function customGoogleSearch(uule, query, websiteRoot){
+
+	rootUrl = websiteRoot.split('//');	
+
+	request('http://www.google.com/search?q=' + query + '&uule=' + uule, function(error, response, body){
+		if(error){
+			console.log(error);
+		}
+		var $ = cheerio.load(body);
+
+		//var urls = $('cite').text();
+		var urlArray = [];
+		$('cite').each(function(i, elem){
+			urlArray[i] = $(this).text();
+		})
+
+		setTimeout(function(){
+			console.log("running google search");
+		for (var i = 0; i < urlArray.length; i++) {
+			if(urlArray[i].includes(rootUrl[1]))
+			console.log(i + " is at " + urlArray[i]);
+		}}, 5000);
+
+	})
+
 }

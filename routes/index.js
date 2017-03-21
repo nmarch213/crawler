@@ -10,7 +10,7 @@ router.get('/', function(req, res) {
 
 router.post('/runGoogleAdder', function(req, res){
 	var url = req.body.url;
-	var keywords = req.body.key;
+	var keywords = req.body.keywords;
 	googleRunner.localizedKeywordSearch(url, keywords);
 	res.render('index');
 })
