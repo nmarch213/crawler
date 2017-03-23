@@ -13,7 +13,7 @@ router.post('/runGoogleAdder', function(req, res){
 	var url = req.body.url;
 	var keywords = req.body.keywords;
 	googleRunner.localizedKeywordSearch(url, keywords);
-	res.render('results');
+	res.redirect('/results');
 });
 
 router.get('/results', function(req, res){

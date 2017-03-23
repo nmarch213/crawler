@@ -35,20 +35,20 @@ module.exports = {
         var uule;
 
         async.series([
-            function setGoogleAuthentication(step) {
-                //load credentials
-                var creds = require('./../gcredentials.json');
-                //google spreadsheet authentication
-                doc.useServiceAccountAuth(creds, step);
-            },
-            function getInfoAndWorksheets(step) {
-                doc.getInfo(function(err, info) {
-                    //console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
-                    sheet = info.worksheets[0];
-                    //console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
-                    step();
-                });
-            },
+            // function setGoogleAuthentication(step) {
+            //     //load credentials
+            //     var creds = require('./../gcredentials.json');
+            //     //google spreadsheet authentication
+            //     doc.useServiceAccountAuth(creds, step);
+            // },
+            // function getInfoAndWorksheets(step) {
+            //     doc.getInfo(function(err, info) {
+            //         //console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
+            //         sheet = info.worksheets[0];
+            //         //console.log('sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
+            //         step();
+            //     });
+            // },
             function getLocalizedUULE(step) {
                 request(websiteRoot, function(error, response, body) {
                     if (error) {
