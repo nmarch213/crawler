@@ -17,7 +17,7 @@ router.post('/runGoogleAdder', function(req, res){
 });
 
 router.get('/results', function(req, res){
-	Results.find().sort({created: 1}).exec(function(err, results){
+	Results.find().sort({date: -1}).exec(function(err, results){
 		if(err){
 			console.log(err);
 		}else{
