@@ -3,34 +3,47 @@ const cheerio = require('cheerio');
 const madison = require('madison');
 const utf8 = require('utf8');
 const base64 = require('base-64');
+const winston = require('winston');
+const async = require('async');
+
 
 module.exports = {
 
+
     /**
      * @param  {string} websiteRoot - The root website, this is usesd to get the
-     * 								  zipcode, and postal code for uule generation.
-     * 								  
+     *                                zipcode, and postal code for uule generation.
+     *                                
      * @return {string} uule - This is the uule to localize each search.
      */
     getLocalizedUULE: function(websiteRoot) {
 
-        var uule;
+        var uule = 'test';
 
-        request(websiteRoot, function(error, response, body) {
-            if (error) {
-                console.log("Error: " + error);
-                return;
-            }
-            if (response.statusCode === 200) {
-                var $ = cheerio.load(body);
+        async.series([
+            function getLocalizedUULE(step) {
+                request(websiteRoot, function(error, response, body) {
+                    if (error) {
+                        console.log("Error: " + error);
+                        return;
+                    }
+                    if (response.statusCode === 200) {
+                        var $ = cheerio.load(body);
 
-                var zipcode = $('span[itemprop=postalCode]').text();
-                var state = $('span[itemprop=addressRegion]').text();
-                uule = getWebsiteLocalizedSearchUULE(zipcode, state);
+                        var zipcode = $('span[itemprop=postalCode]').text();
+                        var state = $('span[itemprop=addressRegion]').text();
+                        uule = getWebsiteLocalizedSearchUULE(zipcode, state);
+                        setTimeout(function() {
+                            step(null, uule)
+                        }, 2000)
+                    }
+                })
             }
+        ], function(err, results) {
+            winston.info("here is the uule in" + uule);
+            winston.info("here is the uule " + results);
+            return results;
         })
-
-        return uule;
     }
 }
 
@@ -51,7 +64,6 @@ module.exports = {
 function getWebsiteLocalizedSearchUULE(zipcode, state) {
 
     var uuleRoot = 'w+CAIQICI';
-    var uule;
 
     madison.getStateName(state, function(stateFullName) {
 

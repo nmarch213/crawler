@@ -1,0 +1,20 @@
+<div class="container">
+<table class="table table-bordered">
+	<tr>
+		<th>Website Name</th>
+		<th>Company Page</th>
+		<th>Keywords</th>
+		<th>UULE</th>
+		<th>Website</th>
+	</tr>
+	{{#each companies}}
+	<tr>
+		<td>{{name}}</td>
+		<td> <a href="/company/{{_id}}">Page</a></td>
+		<td>{{keywords}}</td>
+		<td>{{uule}}</td>
+		<td>{{url}}</td>
+	</tr>
+	{{/each}}
+</table>
+</div>

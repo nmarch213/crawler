@@ -11,8 +11,8 @@ const mongoose = require('mongoose'),
  */
 
 var Company = new Schema({
-    name: String,
-    url: String,
+    name: { type: String, unique: true },
+    url: { type: String, unique: true },
     uule: String,
     keywords: [{
         type: mongoose.Schema.Types.ObjectId,
