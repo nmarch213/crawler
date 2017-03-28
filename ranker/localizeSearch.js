@@ -1,6 +1,8 @@
 const request = require('request');
 const cheerio = require('cheerio');
 const madison = require('madison');
+const utf8 = require('utf8');
+const base64 = require('base-64');
 
 module.exports = {
 

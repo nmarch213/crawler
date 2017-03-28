@@ -1,18 +1,31 @@
 var Company = require('../models/company.js');
 var mongoose = require('mongoose');
+var localizeSearch = require('../ranker/localizeSearch.js');
+var winston = require('winston');
 
 module.exports = {
 
-	addNewCompany: function(name, url, keywords){
+	/**
+	 * This adds a company to the database.
+	 * 
+	 * @param {string} name - The company Name
+	 * @param {string} url - The company url
+	 */
+	addNewCompany: function(name, url){
 		var newCompany = {
 			name: name,
 			url: url,
-			keywords: []
+			uule: localizeSearch.getLocalizedUULE(url)
 		}
 
-		for (var i = 0; i < keywords.length; i++) {
-			keywords[i]
-		}
-	}
+		Company.create(newCompany, function(err, addedCompany){
+			if(err){
+				winston.error(err);
+			}
+			winston.info(addedCompany.name + " has been successfully added.");
+		});
+	},
+
+
 
 }
