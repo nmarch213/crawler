@@ -5,6 +5,7 @@ const utf8 = require('utf8');
 const base64 = require('base-64');
 const winston = require('winston');
 const async = require('async');
+const Company = require('../models/company.js');
 
 
 module.exports = {
@@ -16,7 +17,7 @@ module.exports = {
      *                                
      * @return {string} uule - This is the uule to localize each search.
      */
-    getLocalizedUULE: function(websiteRoot) {
+    getLocalizedUULE: function(websiteRoot, companyID) {
 
         var uule = 'test';
 
@@ -39,10 +40,15 @@ module.exports = {
                     }
                 })
             }
-        ], function(err, results) {
+        ], function(err, uule) {
             winston.info("here is the uule in" + uule);
-            winston.info("here is the uule " + results);
-            return results;
+            Company.findOneAndUpdate({_id: companyID}, {$set:{uule: uule}}, {new: true}, function(err, updatedCompany){
+                if(err){
+                    winston.error("error when adding uule " + err);
+                }
+
+                winston.info("Updated company with uule: " + uule);
+            })
         })
     }
 }

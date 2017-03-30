@@ -13,56 +13,22 @@ module.exports = {
      * @param {string} url - The company url
      */
     addNewCompany: function(name, url) {
-    	var newCompany;
-        var uule = 'test 2';
+        var newCompany;
 
-        async.series([
-            function getLocalizedUULE(step) {
-                uule = localizeSearch.getLocalizedUULE(url);
-                setTimeout(function() {
-                	winston.info("here is the uule " + uule);
-                    step();
-                }, 5000);
-            },
-
-            function setNewCompany(step) {
-                newCompany = {
-                    name: name,
-                    url: url,
-                    uule: uule
-                }
-                winston.info("here is the uule " + uule);
-                step();
+        newCompany = {
+            name: name,
+            url: url
+        }
+        Company.create(newCompany, function(err, addedCompany) {
+            if (err) {
+                winston.error("Add Company Error: " + err);
+                return;
             }
-        ], function(err, results) {
-            Company.create(newCompany, function(err, addedCompany) {
-                if (err) {
-                    winston.error("Add Company Error: " + err);
-                    return;
-                }
-                winston.info("here is the uule " + uule);
-                winston.info(addedCompany.name + " has been successfully added.");
-            });
-        })
+            
+            localizeSearch.getLocalizedUULE(url, addedCompany._id);
 
-        // var uule = localizeSearch.getLocalizedUULE(url);
-
-        // setTimeout(function() {
-        //     var newCompany = {
-        //         name: name,
-        //         url: url,
-        //         uule: uule
-        //     }
-
-        //     Company.create(newCompany, function(err, addedCompany) {
-        //         if (err) {
-        //             winston.error("Add Company Error: " + err);
-        //             return;
-        //         }
-        //         winston.info("here is the uule " + uule);
-        //         winston.info(addedCompany.name + " has been successfully added.");
-        //     });
-        // }, 5000)
+            winston.info(addedCompany.name + " has been successfully added.");
+        });
 
     },
 
