@@ -5,6 +5,7 @@ var winston = require('winston');
 
 const googleRunner = require('./../xmlcrawler/googleSpreadsheet');
 const companyController = require('./../controllers/company.js');
+const keywordController = require('./../controllers/keyword.js');
 
 
 //homepage
@@ -36,6 +37,12 @@ router.get('/company', function(req, res) {
     })
 })
 
+router.get('/company/:id', function(req, res) {
+    Company.findById(req.params.id).populate('keywords').exec( function(err, foundCompany) {
+        res.render('company/show', { company: foundCompany })
+    })
+})
+
 router.get('/company/new', function(req, res) {
     res.render('company/new');
 })
@@ -48,6 +55,16 @@ router.get('/results', function(req, res) {
             res.render('index/results', { results: results });
         }
     })
+})
+
+router.post('/keyword/new', function(req, res){
+    var keyword = req.body.keyword;
+    var companyID = req.body.companyID;
+    var websiteRoot = req.body.websiteRoot;
+
+    keywordController.addNewKeyword(keyword, companyID, websiteRoot);
+
+    res.redirect('/company/'+companyID);
 })
 
 module.exports = router;
