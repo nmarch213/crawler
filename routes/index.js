@@ -1,6 +1,7 @@
 var router = require('express').Router();
 var Results = require('../models/quickResults.js');
 var Company = require('../models/company.js');
+var Keyword = require('../models/keyword.js');
 var winston = require('winston');
 
 const googleRunner = require('./../xmlcrawler/googleSpreadsheet');
@@ -28,7 +29,7 @@ router.post('/test', function(req, res) {
 })
 
 router.get('/company', function(req, res) {
-    Company.find().exec(function(err, companies) {
+    Company.find().populate('keywords').exec(function(err, companies) {
         if (err) {
             winston.error("Company Find Error: " + err);
         } else {
@@ -38,7 +39,7 @@ router.get('/company', function(req, res) {
 })
 
 router.get('/company/:id', function(req, res) {
-    Company.findById(req.params.id).populate('keywords').exec( function(err, foundCompany) {
+    Company.findById(req.params.id).populate('keywords').exec(function(err, foundCompany) {
         res.render('company/show', { company: foundCompany })
     })
 })
@@ -57,14 +58,14 @@ router.get('/results', function(req, res) {
     })
 })
 
-router.post('/keyword/new', function(req, res){
+router.post('/keyword/new', function(req, res) {
     var keyword = req.body.keyword;
     var companyID = req.body.companyID;
     var websiteRoot = req.body.websiteRoot;
 
     keywordController.addNewKeyword(keyword, companyID, websiteRoot);
 
-    res.redirect('/company/'+companyID);
+    res.redirect('/company/' + companyID);
 })
 
 module.exports = router;

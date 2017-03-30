@@ -7,11 +7,18 @@
 		<th>UULE</th>
 		<th>Website</th>
 	</tr>
+
+	{{companies.name}}
+
 	{{#each companies}}
 	<tr>
 		<td>{{name}}</td>
 		<td> <a href="/company/{{_id}}">Page</a></td>
-		<td>{{keywords}}</td>
+		<td>
+			{{#each keywords}}
+				{{this.keyword}},
+			{{/each}}
+		</td>
 		<td>{{uule}}</td>
 		<td>{{url}}</td>
 	</tr>
