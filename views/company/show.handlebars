@@ -1,29 +1,65 @@
 <div class="container">
 	<header id="header" class="jumbotron">
-		<div class="container">
+		<div class="container col-lg-6">
 			<h1>{{company.name}}</h1>
-			<h2>Keywords</h2>
+			<h3>Keywords:</h3>
 			{{#each company.keywords}}
-				<p>{{keyword}}</p>
+				{{keyword}}, 
 			{{/each}}
+			<div class="container">
+				<form action="/runGoogleAdder" method="post">
+					<div class="form-group hidden">
+						<label for="url">Website url</label>
+						<input type="text" name="url" value="{{company.url}}" id="url" placeholder="Website URL" class="form-control">
+						<p class="help-block">Please include full url: ex: "http://www.google.com/"</p>
+					</div>
+					<div class="form-group hidden">
+						<label for="keywords">Keyword(s) to search</label>
+						<input type="text" 
+						value="{{#each company.keywords}}{{keyword}}, {{/each}}" 
+						name="keywords" class="form-control" placeholder="Keyword(s)">
+						<p class="help-block">Enter one, or many keywords separated by a comma. ex: "eggs, milk, cereal"</p>
+					</div>
+					<button type="submit" class="btn btn-default">Run Keyword Ranking</button>
+				</form>
+			</div>
 		</div>
-		<a class="btn btn-default" href="/results">Results Page</a>
+		<div class="container col-lg-6">
+			<form action="/keyword/new" method="post">
+				<div class="form-group">
+					<label for="keyword">Add New Keyword</label>
+					<input type="text" name="keyword" id="keyword" placeholder="Plumbing Contractor" class="form-control">
+					<p class="help-block">Please enter one keyword: "Plumbing"</p>
+				</div>
+				<div class="form-group">
+					<input type="hidden" name="websiteRoot" id="websiteRoot" class="form-control" value="{{company.url}}">
+				</div>
+				<div class="form-group">
+					<input type="hidden" name="companyID" id="companyID" class="form-control" value="{{company._id}}">
+				</div>
+					<button type="submit" class="btn btn-default">Submit</button>
+			</form>
+		</div>
 	</header>
 </div>
 
-<div class="container">
-	<form action="/keyword/new" method="post">
-		<div class="form-group">
-			<label for="keyword">Add New Keyword</label>
-			<input type="text" name="keyword" id="keyword" placeholder="Plumbing Contractor" class="form-control">
-			<p class="help-block">Please enter one keyword: "Plumbing"</p>
-		</div>
-		<div class="form-group">
-			<input type="hidden" name="websiteRoot" id="websiteRoot" class="form-control" value="{{company.url}}">
-		</div>
-		<div class="form-group">
-			<input type="hidden" name="companyID" id="companyID" class="form-control" value="{{company._id}}">
-		</div>
-		<button type="submit" class="btn btn-default">Submit</button>
-	</form>
+<div class="container" style="padding-top: 10px">
+	<table class="table table-bordered">
+		<tr>
+			<th>Keyword</th>
+			<th>Latest Rank</th>
+			<th>Date</th>
+			<th>Website Found</th>
+		</tr>
+		{{#each company.keywords}}
+		<tr>
+			<td>{{keyword}}</td>
+			<td>{{rank}}</td>
+			<td>{{date}}</td>
+			<td>{{websiteFound}}</td>
+		</tr>
+		{{/each}}
+	</table>
 </div>
+
+

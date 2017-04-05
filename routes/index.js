@@ -38,15 +38,16 @@ router.get('/company', function(req, res) {
     })
 })
 
+router.get('/company/new', function(req, res) {
+    res.render('company/new');
+})
+
 router.get('/company/:id', function(req, res) {
     Company.findById(req.params.id).populate('keywords').exec(function(err, foundCompany) {
         res.render('company/show', { company: foundCompany })
     })
 })
 
-router.get('/company/new', function(req, res) {
-    res.render('company/new');
-})
 
 router.get('/results', function(req, res) {
     Results.find().sort({ date: -1 }).exec(function(err, results) {

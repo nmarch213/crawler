@@ -23,9 +23,8 @@ module.exports = {
 				if(err){
 					winston.error("Error is adding keyword to company: " + err);
 				}
-				winston.info(createdKeyword.keyword + " has been added to company " + companyID);
+				winston.info(createdKeyword.keyword + " has been added to company " + updatedCompany.name);
 			})
-
 			winston.info(createdKeyword.keyword + " has been added.");
 
 		})
