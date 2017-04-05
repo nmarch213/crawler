@@ -42,6 +42,11 @@ router.get('/company/new', function(req, res) {
     res.render('company/new');
 })
 
+router.post('/company/:id/keywordSearch', function(req, res){
+    keywordController.rankCompanyKeywords(req.params.id);
+    res.redirect('/company/'+req.params.id);
+})
+
 router.get('/company/:id', function(req, res) {
     Company.findById(req.params.id).populate('keywords').exec(function(err, foundCompany) {
         res.render('company/show', { company: foundCompany })

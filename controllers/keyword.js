@@ -2,6 +2,7 @@ const Keyword = require('../models/keyword.js');
 const Company = require('../models/company.js');
 const winston = require('winston');
 const mongoose = require('mongoose');
+const Ranker = require('../ranker/ranker.js');
 
 
 
@@ -27,6 +28,16 @@ module.exports = {
 			})
 			winston.info(createdKeyword.keyword + " has been added.");
 
+		})
+	},
+
+	rankCompanyKeywords: function(companyID){
+		Company.findById(companyID).populate("keywords").exec(function(err, foundCompany){
+			if(err){
+				winston.error(err);
+			}
+			Ranker.companyGoogleSearch(foundCompany);
+			winston.info(foundCompany.name + " has been found!")
 		})
 	}
 

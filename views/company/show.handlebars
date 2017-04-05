@@ -7,7 +7,7 @@
 				{{keyword}}, 
 			{{/each}}
 			<div class="container">
-				<form action="/runGoogleAdder" method="post">
+				<form action="/company/{{company._id}}/keywordSearch" method="post">
 					<div class="form-group hidden">
 						<label for="url">Website url</label>
 						<input type="text" name="url" value="{{company.url}}" id="url" placeholder="Website URL" class="form-control">
