@@ -17,13 +17,13 @@ module.exports = {
             keyword: keyword,
             websiteRoot: websiteRoot
         }
-
+        winston.error(companyID)
         Keyword.create(keyword, function(err, createdKeyword) {
             if (err) {
                 winston.error("Error is keyword creation " + err);
             }
 
-            Company.findOneAndUpdate(companyID, { $push: { "keywords": createdKeyword._id } }, function(err, updatedCompany) {
+            Company.findOneAndUpdate({_id: companyID}, { $push: { "keywords": createdKeyword._id } }, function(err, updatedCompany) {
                 if (err) {
                     winston.error("Error is adding keyword to company: " + err);
                 }
@@ -73,6 +73,17 @@ module.exports = {
 
                                     console.log(foundKeyword.keyword + " ranks at " + realRank + ". The site found: " + googleSearchCiteResults[i]);
                                 }
+                            }
+                            if(isKeywordRanking==false){
+                            	var realRank = i + 1;
+                                    isKeywordRanking = true;
+                                    
+                                    Keyword.findByIdAndUpdate({_id:foundKeyword._id}, {$push: {rank: -1, websiteFound: "None", date: moment().format('MMM Do YYYY, h:mm:ss a')}}, function(err, updatedKeyword){
+                                    	winston.info("Keyword: " + updatedKeyword.keyword + " was updated for the comapny: " + foundCompany.name);
+                                    })
+
+
+                                    console.log(foundKeyword.keyword + " ranks at " + realRank + ". The site found: " + googleSearchCiteResults[i]);
                             }
                         }, 5000);
                     })

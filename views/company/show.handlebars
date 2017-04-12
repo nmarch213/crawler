@@ -25,7 +25,7 @@
 			</div>
 		</div>
 		<div class="container col-lg-6">
-			<form action="/keyword/new" method="post">
+			<form action="/keyword/{{company._id}}/new" method="post">
 				<div class="form-group">
 					<label for="keyword">Add New Keyword</label>
 					<input type="text" name="keyword" id="keyword" placeholder="Plumbing Contractor" class="form-control">
@@ -33,9 +33,6 @@
 				</div>
 				<div class="form-group">
 					<input type="hidden" name="websiteRoot" id="websiteRoot" class="form-control" value="{{company.url}}">
-				</div>
-				<div class="form-group">
-					<input type="hidden" name="companyID" id="companyID" class="form-control" value="{{company._id}}">
 				</div>
 					<button type="submit" class="btn btn-default">Submit</button>
 			</form>

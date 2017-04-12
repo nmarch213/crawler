@@ -64,9 +64,9 @@ router.get('/results', function(req, res) {
     })
 })
 
-router.post('/keyword/new', function(req, res) {
+router.post('/keyword/:id/new', function(req, res) {
     var keyword = req.body.keyword;
-    var companyID = req.body.companyID;
+    var companyID = req.params.id;
     var websiteRoot = req.body.websiteRoot;
 
     keywordController.addNewKeyword(keyword, companyID, websiteRoot);
