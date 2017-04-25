@@ -408,7 +408,7 @@ function customGoogleSearch(uule, query, websiteRoot) {
 
 
         var googleSearchCiteResults = [];
-        $('cite').each(function(i, elem) {
+        $('div[class=g]').each(function(i, elem) {
             googleSearchCiteResults[i] = $(this).text();
         })
 

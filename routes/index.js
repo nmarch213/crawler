@@ -58,11 +58,11 @@ router.get('/company/:id', function(req, res) {
 
 
 router.get('/results', function(req, res) {
-    Results.find().sort({ date: -1 }).exec(function(err, results) {
+    Results.find().sort({ dateFound: 1}).exec(function(err, results) {
         if (err) {
             console.log(err);
         } else {
-            res.render('index/results', { results: results });
+            res.render('index/results', { results: results,helpers: helpers });
         }
     })
 })
