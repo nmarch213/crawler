@@ -45,15 +45,23 @@
 		<tr>
 			<th>Keyword</th>
 			<th>Latest Rank</th>
+			<th>All Rankings</th>
 			<th>Date</th>
 			<th>Website Found</th>
 		</tr>
 		{{#each company.keywords}}
 		<tr>
 			<td>{{keyword}}</td>
-			<td>{{rank}}</td>
-			<td>{{date}}</td>
-			<td>{{websiteFound}}</td>
+			{{#with this.rank}}
+					<td><strong>{{last this}}</strong></td>
+			{{/with}}
+			<td>{{rank}}</td>>
+			{{#with this.date}}
+					<td>{{last this}}</td>
+			{{/with}}
+			{{#with this.websiteFound}}
+					<td>{{last this}}</td>
+			{{/with}}
 		</tr>
 		{{/each}}
 	</table>

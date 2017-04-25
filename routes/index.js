@@ -3,6 +3,7 @@ var Results = require('../models/quickResults.js');
 var Company = require('../models/company.js');
 var Keyword = require('../models/keyword.js');
 var winston = require('winston');
+var helpers = require('handlebars-helpers')();
 
 const googleRunner = require('./../xmlcrawler/googleSpreadsheet');
 const companyController = require('./../controllers/company.js');
@@ -49,7 +50,9 @@ router.post('/company/:id/keywordSearch', function(req, res){
 
 router.get('/company/:id', function(req, res) {
     Company.findById(req.params.id).populate('keywords').exec(function(err, foundCompany) {
-        res.render('company/show', { company: foundCompany })
+        var keywordLength = foundCompany.keywords.length;
+        var lastSearch = foundCompany.keywords[keywordLength -1];
+        res.render('company/show', { company: foundCompany, lastSearch: lastSearch, helpers: helpers })
     })
 })
 
