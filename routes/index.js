@@ -77,4 +77,12 @@ router.post('/keyword/:id/new', function(req, res) {
     res.redirect('/company/' + companyID);
 })
 
+router.post('/keyword/:id/delete', function(req, res){
+    Keyword.findByIdAndRemove(req.params.id, function(err, removedKeyword){
+        winston.info(removedKeyword.keyword + " has been removed.");
+    })
+
+    res.redirect('/company');
+})
+
 module.exports = router;

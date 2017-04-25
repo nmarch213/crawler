@@ -48,6 +48,7 @@
 			<th>All Rankings</th>
 			<th>Date</th>
 			<th>Website Found</th>
+			<th>Remove Keyword</th>
 		</tr>
 		{{#each company.keywords}}
 		<tr>
@@ -62,9 +63,9 @@
 			{{#with this.websiteFound}}
 					<td>{{last this}}</td>
 			{{/with}}
+			<td><form action="/keyword/{{_id}}/delete" method="post"><button type="submit" class="glyphicon glyphicon-trash"></button></form></td>
 		</tr>
 		{{/each}}
 	</table>
 </div>
-
 
